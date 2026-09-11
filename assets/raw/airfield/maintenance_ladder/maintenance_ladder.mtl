@@ -1,0 +1,16 @@
+# converted from ladder.glb by gltf2obj.py
+
+newmtl stairs
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1.0000
+# alphaMode BLEND doubleSided
+Pm 1.000
+Pr 1.000
+map_Kd maintenance_ladder_diffuse_0.png
+map_d maintenance_ladder_diffuse_0.png
+map_Bump maintenance_ladder_normal_2.jpg
+norm maintenance_ladder_normal_2.jpg

@@ -1,0 +1,12 @@
+# converted from jet_collection_bohmerang.glb by gltf2obj.py
+
+newmtl Scene_-_Root
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 1.000

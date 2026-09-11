@@ -1,0 +1,24 @@
+# converted from weapons_pack_ekmek.glb by gltf2obj.py
+
+newmtl AGM-65Texture
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.400
+map_Kd agm65g_maverick_ekmek_diffuse_1.jpg
+
+newmtl Black
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500

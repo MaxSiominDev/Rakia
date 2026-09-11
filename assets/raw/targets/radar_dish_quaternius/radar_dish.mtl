@@ -1,0 +1,13 @@
+# converted from roof_radar_quaternius_V7XQDxF8JC.glb by gltf2obj.py
+
+newmtl Atlas
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 1.000
+map_Kd radar_dish_diffuse_0.jpg

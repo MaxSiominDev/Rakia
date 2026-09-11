@@ -1,0 +1,16 @@
+# converted from agm154_rickslash.glb by gltf2obj.py
+
+newmtl lambert1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+map_Kd agm154_jsow_rickslash_diffuse_0.jpg
+map_Bump agm154_jsow_rickslash_normal_2.jpg
+norm agm154_jsow_rickslash_normal_2.jpg
+map_Pr agm154_jsow_rickslash_metalRough_1.jpg  # glTF packing: G=roughness B=metallic

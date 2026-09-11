@@ -1,0 +1,113 @@
+# converted from sam_2k12_kub.glb by gltf2obj.py
+
+newmtl Material__26
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+map_Kd sam_2k12_kub_diffuse_0.jpg
+
+newmtl Material__25
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__29
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__32
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__31
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__34
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__33
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__30
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__36
+Kd 0.5880 0.5880 0.5880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl Material__955
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+map_Kd sam_2k12_kub_diffuse_0.jpg

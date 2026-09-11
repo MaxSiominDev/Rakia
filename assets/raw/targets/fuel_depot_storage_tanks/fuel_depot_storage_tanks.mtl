@@ -1,0 +1,69 @@
+# converted from storage_tanks.glb by gltf2obj.py
+
+newmtl lambert3
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.802
+Pr 0.600
+map_Kd fuel_depot_storage_tanks_diffuse_0.jpg
+map_Bump fuel_depot_storage_tanks_normal_1.jpg
+norm fuel_depot_storage_tanks_normal_1.jpg
+
+newmtl Round_Tank_Material
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.377
+Pr 0.626
+map_Kd fuel_depot_storage_tanks_diffuse_2.jpg
+map_Bump fuel_depot_storage_tanks_normal_3.jpg
+norm fuel_depot_storage_tanks_normal_3.jpg
+
+newmtl Long_TankLong_TankA_Material
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.921
+map_Kd fuel_depot_storage_tanks_diffuse_4.jpg
+map_Bump fuel_depot_storage_tanks_normal_5.jpg
+norm fuel_depot_storage_tanks_normal_5.jpg
+
+newmtl Long_Tanklambert3
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+map_Kd fuel_depot_storage_tanks_diffuse_0.jpg
+
+newmtl Large_tank
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.000
+map_Kd fuel_depot_storage_tanks_diffuse_6.jpg
+map_Bump fuel_depot_storage_tanks_normal_7.jpg
+norm fuel_depot_storage_tanks_normal_7.jpg

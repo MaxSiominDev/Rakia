@@ -1,0 +1,122 @@
+# converted from m939_truck_jtoastie_y8lBpvMlim.glb by gltf2obj.py
+
+newmtl grey1
+Kd 0.2079 0.2079 0.2079
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.272
+
+newmtl Body2
+Kd 0.0633 0.0871 0.0245
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.426
+
+newmtl Body
+Kd 0.1176 0.1523 0.0353
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.375
+
+newmtl mirror
+Kd 0.3672 0.3672 0.3672
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.155
+
+newmtl grey2
+Kd 0.0800 0.0800 0.0800
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.577
+
+newmtl seats
+Kd 0.1030 0.1282 0.0570
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.577
+
+newmtl Tires
+Kd 0.0578 0.0578 0.0578
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.426
+
+newmtl BackCovering
+Kd 0.2060 0.2140 0.0719
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.577
+
+newmtl light_front
+Kd 0.8000 0.8000 0.8000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.272
+
+newmtl light_back
+Kd 0.8000 0.1884 0.1884
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.198
+
+newmtl tire_2
+Kd 0.1960 0.1960 0.1960
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE
+Pm 0.400
+Pr 0.229

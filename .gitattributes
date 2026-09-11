@@ -1,0 +1,12 @@
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+Makefile text eol=lf
+*.bmp binary
+*.png binary
+*.jpg binary
+*.hdr binary
+*.exe binary
+*.zip binary
+# collected assets stay byte for byte as downloaded
+assets/raw/** -text

@@ -1,0 +1,338 @@
+# converted from f16_andertan.glb by gltf2obj.py
+
+newmtl material_0
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.600
+
+newmtl F16_Grey
+Kd 0.3931 0.3931 0.3931
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl F16_text_R.001
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.053
+Pr 0.200
+map_Kd f16_andertan_diffuse_0.jpg
+
+newmtl F16_text_L
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.900
+map_Kd f16_andertan_diffuse_1.jpg
+
+newmtl white_mat
+Kd 0.8000 0.8000 0.8000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl darkenss
+Kd 0.0240 0.0238 0.0238
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl F15_R
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 0.488
+
+newmtl Not_so_dark
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+map_Kd f16_andertan_diffuse_2.jpg
+
+newmtl white_mat.001
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl F15_R.001
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Not_so_dark.001
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+map_Kd f16_andertan_diffuse_2.jpg
+
+newmtl Material.006
+Kd 0.0264 0.0245 0.0245
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl fuel_tank
+Kd 0.2703 0.2680 0.2510
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Base_paint
+Kd 0.4064 0.4064 0.4064
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.498
+Pr 0.465
+
+newmtl Darker_paint.001
+Kd 0.4072 0.4072 0.4072
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.485
+
+newmtl Material.001
+Kd 0.4072 0.4072 0.4072
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl F16_lighter_grey
+Kd 0.5705 0.5705 0.5705
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Engine_inside
+Kd 0.5830 0.5724 0.5602
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Material.005
+Kd 0.5191 0.4839 0.4839
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+
+newmtl Not_so_Dark
+Kd 0.9636 0.9800 0.7345
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 0.5592
+# alphaMode BLEND doubleSided
+Pm 1.000
+Pr 0.000
+
+newmtl Darker_blue_hue_glass
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+
+newmtl Material.003
+Kd 0.5757 0.5757 0.5757
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 0.8095
+# alphaMode BLEND doubleSided
+Pm 1.000
+Pr 0.000
+
+newmtl Darkness.001
+Kd 0.5978 0.5860 0.5860
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Whitish_grey.001
+Kd 0.1931 0.1931 0.1931
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl Glowing_green.001
+Kd 0.1790 0.1706 0.1706
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+
+newmtl screen.001
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500
+map_Kd f16_andertan_diffuse_3.jpg
+Ke 0.0000 0.5399 0.0620
+
+newmtl Darker_paint
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.275
+Pr 0.485
+map_Kd f16_andertan_diffuse_3.jpg
+
+newmtl Gold
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 0.500
+
+newmtl material
+Kd 0.7913 0.4179 0.1413
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 0.500
+
+newmtl F15_L
+Kd 0.2020 0.2020 0.2020
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 0.000
+Pr 0.500

@@ -1,0 +1,13 @@
+build/
+build-win/
+rakia
+rakia.exe
+*.o
+*.bmp
+!tests/reference/*.bmp
+third_party/freeglut-win32/
+.DS_Store
+dist/
+.idea/
+CLAUDE.md
+docs/

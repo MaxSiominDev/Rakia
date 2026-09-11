@@ -1,0 +1,49 @@
+# converted from quonset_hut.glb by gltf2obj.py
+
+newmtl wall
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+map_Kd shelter_quonset_hut_diffuse_0.jpg
+map_Bump shelter_quonset_hut_normal_2.jpg
+norm shelter_quonset_hut_normal_2.jpg
+map_Pr shelter_quonset_hut_metalRough_1.jpg  # glTF packing: G=roughness B=metallic
+# ambient occlusion: packed in the R channel of shelter_quonset_hut_metalRough_1.jpg (glTF ORM)
+
+newmtl material
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+map_Kd shelter_quonset_hut_diffuse_3.jpg
+map_Bump shelter_quonset_hut_normal_5.jpg
+norm shelter_quonset_hut_normal_5.jpg
+map_Pr shelter_quonset_hut_metalRough_4.jpg  # glTF packing: G=roughness B=metallic
+# ambient occlusion: packed in the R channel of shelter_quonset_hut_metalRough_4.jpg (glTF ORM)
+
+newmtl floor
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+illum 2
+d 1
+# alphaMode OPAQUE doubleSided
+Pm 1.000
+Pr 1.000
+map_Kd shelter_quonset_hut_diffuse_6.jpg
+map_Bump shelter_quonset_hut_normal_8.jpg
+norm shelter_quonset_hut_normal_8.jpg
+map_Pr shelter_quonset_hut_metalRough_7.jpg  # glTF packing: G=roughness B=metallic
+# ambient occlusion: packed in the R channel of shelter_quonset_hut_metalRough_7.jpg (glTF ORM)
