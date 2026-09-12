@@ -1,0 +1,28 @@
+# materials for shapes.obj
+
+newmtl painted
+Kd 0.2 0.4 0.6
+Ka 0 0 0
+Ks 0.5 0.5 0.5
+Ns 50
+illum 2
+d 0.75
+# alphaMode BLEND doubleSided
+Ke 1.0 0.5 0.25
+Pm 0.3
+Pr 0.8
+map_Kd painted diffuse.png
+map_d painted alpha.png
+map_Bump wrong.jpg
+norm painted normal.jpg
+map_Pr painted mr.jpg  # glTF packing: G=roughness B=metallic
+map_Ke painted emissive.jpg
+
+newmtl plain
+Ns 10
+d 0
+map_Kd plain.png
+
+newmtl backed
+# alphaMode OPAQUE doubleSided
+Kd 1 0 0

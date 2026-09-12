@@ -165,3 +165,23 @@ GLint shader_uniform(Shader *shader, const char *name)
 
     return location;
 }
+
+void shader_set_int(Shader *shader, const char *name, int value)
+{
+    glUniform1i(shader_uniform(shader, name), value);
+}
+
+void shader_set_float(Shader *shader, const char *name, float value)
+{
+    glUniform1f(shader_uniform(shader, name), value);
+}
+
+void shader_set_vec3(Shader *shader, const char *name, Vec3 value)
+{
+    glUniform3f(shader_uniform(shader, name), value.x, value.y, value.z);
+}
+
+void shader_set_mat4(Shader *shader, const char *name, Mat4 value)
+{
+    glUniformMatrix4fv(shader_uniform(shader, name), 1, GL_FALSE, value.m);
+}

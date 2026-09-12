@@ -5,13 +5,6 @@
 
 #define HALF_PI (VEC_PI * 0.5f)
 
-static void check_v3(Vec3 actual, float x, float y, float z, const char *what)
-{
-    check_close(actual.x, x, 1e-5f, what);
-    check_close(actual.y, y, 1e-5f, what);
-    check_close(actual.z, z, 1e-5f, what);
-}
-
 static void check_m4(Mat4 actual, Mat4 expected, const char *what)
 {
     int i;

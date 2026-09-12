@@ -187,13 +187,15 @@ int platform_run(const Options *run_options, const PlatformApp *run_app, int *ar
     glutInitDisplayString("rgb double depth samples=4");
     glutInitWindowSize(windowed_width, windowed_height);
     glutCreateWindow(WINDOW_TITLE);
-    hidpi_enable();
+    if (!options->no_hidpi) {
+        hidpi_enable();
+    }
 
     printf("OpenGL %s on %s\n", (const char *)glGetString(GL_VERSION), (const char *)glGetString(GL_RENDERER));
     loaded = gl_ext_load(&missing) == 0;
     gl_ext_print_status();
     if (!loaded) {
-        fprintf(stderr, "this OpenGL driver has no %s, which Rakia needs for shaders and vertex buffers\n", missing);
+        fprintf(stderr, "this OpenGL driver has no %s, which Rakia needs\n", missing);
         return EXIT_FAILURE;
     }
     gl_ext_set_swap_interval(1);

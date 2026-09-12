@@ -2,6 +2,7 @@
 #define VECMATH_H
 
 #define VEC_PI 3.14159265358979f
+#define VEC_DEGREES (VEC_PI / 180.0f)
 
 typedef struct {
     float x;

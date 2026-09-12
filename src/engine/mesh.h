@@ -7,10 +7,17 @@
 typedef struct {
     GLuint vertex_buffer;
     GLuint index_buffer;
-    GLsizei index_count;
+    MeshGroup *groups;
+    int group_count;
+    Vec3 bounds_min;
+    Vec3 bounds_max;
 } Mesh;
 
-void mesh_create(Mesh *mesh, const MeshData *data);
-void mesh_draw(const Mesh *mesh);
+int mesh_create(Mesh *mesh, const MeshData *data);
+// -1 when no group has that name
+int mesh_group_index(const Mesh *mesh, const char *name);
+void mesh_bind(const Mesh *mesh);
+void mesh_draw_group(const Mesh *mesh, int group);
+void mesh_unbind(void);
 
 #endif

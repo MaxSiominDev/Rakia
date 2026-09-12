@@ -14,5 +14,7 @@ typedef struct {
 
 Mat4 camera_view(const Camera *camera);
 Mat4 camera_projection(const Camera *camera, int width, int height);
+// eye on a sphere around target: yaw 0 looks from +z, yaw grows toward +x, pitch raises the eye
+void camera_orbit(Camera *camera, Vec3 target, float yaw, float pitch, float distance);
 
 #endif

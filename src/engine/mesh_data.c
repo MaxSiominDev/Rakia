@@ -1,6 +1,7 @@
 #include "engine/mesh_data.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #define CUBE_FACES 6
 #define CUBE_VERTICES (CUBE_FACES * 4)
@@ -20,16 +21,40 @@ static const struct {
 
 static const float corner_uvs[4][2] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
 
+static int allocate(MeshData *data, int vertex_count, int index_count)
+{
+    memset(data, 0, sizeof *data);
+    data->vertices = malloc(sizeof *data->vertices * (size_t)vertex_count);
+    data->indices = malloc(sizeof *data->indices * (size_t)index_count);
+    data->groups = calloc(1, sizeof *data->groups);
+    if (data->vertices == NULL || data->indices == NULL || data->groups == NULL) {
+        mesh_data_free(data);
+        return -1;
+    }
+
+    data->vertex_count = vertex_count;
+    data->index_count = index_count;
+    data->group_count = 1;
+    data->groups[0].index_count = index_count;
+
+    return 0;
+}
+
+static void quad_indices(unsigned int *index, unsigned int first_vertex)
+{
+    index[0] = first_vertex;
+    index[1] = first_vertex + 1;
+    index[2] = first_vertex + 2;
+    index[3] = first_vertex;
+    index[4] = first_vertex + 2;
+    index[5] = first_vertex + 3;
+}
+
 int mesh_data_cube(MeshData *data)
 {
     int face;
 
-    data->vertices = malloc(sizeof *data->vertices * CUBE_VERTICES);
-    data->indices = malloc(sizeof *data->indices * CUBE_INDICES);
-    data->vertex_count = CUBE_VERTICES;
-    data->index_count = CUBE_INDICES;
-    if (data->vertices == NULL || data->indices == NULL) {
-        mesh_data_free(data);
+    if (allocate(data, CUBE_VERTICES, CUBE_INDICES) != 0) {
         return -1;
     }
 
@@ -39,7 +64,6 @@ int mesh_data_cube(MeshData *data)
         const Vec3 bitangent = v3_cross(normal, tangent);
         const Vec3 center = v3_scale(normal, 0.5f);
         MeshVertex *vertex = data->vertices + face * 4;
-        unsigned int *index = data->indices + face * 6;
         int corner;
 
         for (corner = 0; corner < 4; corner++) {
@@ -52,15 +76,38 @@ int mesh_data_cube(MeshData *data)
             vertex[corner].u = u;
             vertex[corner].v = v;
             vertex[corner].tangent = tangent;
+            vertex[corner].tangent_sign = 1.0f;
         }
-
-        index[0] = (unsigned int)(face * 4);
-        index[1] = (unsigned int)(face * 4 + 1);
-        index[2] = (unsigned int)(face * 4 + 2);
-        index[3] = (unsigned int)(face * 4);
-        index[4] = (unsigned int)(face * 4 + 2);
-        index[5] = (unsigned int)(face * 4 + 3);
+        quad_indices(data->indices + face * 6, (unsigned int)(face * 4));
     }
+
+    return 0;
+}
+
+int mesh_data_quad(MeshData *data, float size, float tile_size)
+{
+    const float half = size * 0.5f;
+    const float tiles = size / tile_size;
+    int corner;
+
+    if (allocate(data, 4, 6) != 0) {
+        return -1;
+    }
+
+    for (corner = 0; corner < 4; corner++) {
+        const float u = corner_uvs[corner][0];
+        const float v = corner_uvs[corner][1];
+        MeshVertex *vertex = data->vertices + corner;
+
+        // with v growing toward -z, the tangent (+x) and bitangent (-z) frame stays right-handed under the +y normal
+        vertex->position = v3(-half + u * size, 0.0f, half - v * size);
+        vertex->normal = v3(0.0f, 1.0f, 0.0f);
+        vertex->u = u * tiles;
+        vertex->v = v * tiles;
+        vertex->tangent = v3(1.0f, 0.0f, 0.0f);
+        vertex->tangent_sign = 1.0f;
+    }
+    quad_indices(data->indices, 0);
 
     return 0;
 }
@@ -69,8 +116,6 @@ void mesh_data_free(MeshData *data)
 {
     free(data->vertices);
     free(data->indices);
-    data->vertices = NULL;
-    data->indices = NULL;
-    data->vertex_count = 0;
-    data->index_count = 0;
+    free(data->groups);
+    memset(data, 0, sizeof *data);
 }

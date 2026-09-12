@@ -30,6 +30,20 @@ static void test_defaults(void)
     check(options.screenshot_path == NULL, "no screenshot by default");
     check(options.bench_frames == 0, "no bench by default");
     check(options.assets_dir == NULL, "no assets override by default");
+    check(options.help == 0 && options.no_hidpi == 0, "no help and Retina rendering by default");
+}
+
+static void test_flags_without_values(void)
+{
+    check(parse(1, "--help") == 0, "--help parses");
+    check(options.help == 1, "--help is remembered");
+    check(parse(1, "--no-hidpi") == 0, "--no-hidpi parses");
+    check(options.no_hidpi == 1, "--no-hidpi is remembered");
+    check(parse(3, "--no-hidpi", "--window", "640x480") == 0, "a flag without a value can precede one with a value");
+    check(options.no_hidpi == 1 && options.window_width == 640, "both flags are kept");
+    check(parse(3, "--window", "640x480", "--help") == 0, "a flag without a value can follow one with a value");
+    check(options.help == 1 && options.window_height == 480, "both flags are kept the other way round");
+    check(parse(2, "--help", "extra") == -1, "--help takes no value");
 }
 
 static void test_window(void)
@@ -81,6 +95,7 @@ static void test_assets_and_unknown(void)
 void test_options_main(void)
 {
     test_defaults();
+    test_flags_without_values();
     test_window();
     test_screenshot_and_bench();
     test_assets_and_unknown();
