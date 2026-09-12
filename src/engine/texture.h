@@ -10,5 +10,7 @@ typedef enum {
 } TextureKind;
 
 GLuint texture_load(const char *path, TextureKind kind);
+// float rgb, no mipmaps, wrapping horizontally the way an equirect panorama needs
+GLuint texture_load_hdr(const char *path);
 
 #endif

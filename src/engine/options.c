@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -38,33 +37,41 @@ int options_parse(Options *options, int argc, char **argv, char *error, size_t e
 
     memset(options, 0, sizeof *options);
 
-    for (i = 1; i < argc; i += 2) {
+    for (i = 1; i < argc; i++) {
         const char *flag = argv[i];
         const char *value = i + 1 < argc ? argv[i + 1] : NULL;
 
-        if (strcmp(flag, "--window") == 0) {
+        if (strcmp(flag, "--help") == 0) {
+            options->help = 1;
+        } else if (strcmp(flag, "--no-hidpi") == 0) {
+            options->no_hidpi = 1;
+        } else if (strcmp(flag, "--window") == 0) {
             if (value == NULL || parse_window_size(value, &options->window_width, &options->window_height) != 0) {
                 snprintf(error, error_size, "--window needs a size like 1280x720");
                 return -1;
             }
             options->windowed = 1;
+            i++;
         } else if (strcmp(flag, "--screenshot") == 0) {
             if (value == NULL) {
                 snprintf(error, error_size, "--screenshot needs a file name");
                 return -1;
             }
             options->screenshot_path = value;
+            i++;
         } else if (strcmp(flag, "--bench") == 0) {
             if (value == NULL || parse_positive_int(value, &options->bench_frames) != 0) {
                 snprintf(error, error_size, "--bench needs a positive frame count");
                 return -1;
             }
+            i++;
         } else if (strcmp(flag, "--assets") == 0) {
             if (value == NULL) {
                 snprintf(error, error_size, "--assets needs a directory");
                 return -1;
             }
             options->assets_dir = value;
+            i++;
         } else {
             snprintf(error, error_size, "unknown option: %s", flag);
             return -1;
@@ -79,16 +86,19 @@ int options_parse(Options *options, int argc, char **argv, char *error, size_t e
     return 0;
 }
 
-void options_print_usage(const char *program)
+void options_print_usage(FILE *out, const char *program)
 {
-    fprintf(stderr,
-            "usage: %s [--window WxH] [--screenshot FILE] [--bench N] [--assets DIR]\n"
+    fprintf(out,
+            "usage: %s [--window WxH] [--no-hidpi] [--screenshot FILE] [--bench N] [--assets DIR] [--help]\n"
             "  --window WxH      run in a window of that size instead of fullscreen\n"
+            "  --no-hidpi        render one pixel per window point, so a 1280x720 window\n"
+            "                    gives a 1280x720 screenshot on a Retina display too\n"
             "  --screenshot FILE render one frame into FILE as BMP, then exit\n"
             "  --bench N         render N frames, print the mean frame time, then exit\n"
-            "  --assets DIR      load shaders and textures from DIR instead of the\n"
+            "  --assets DIR      load shaders, models and textures from DIR instead of the\n"
             "                    assets directory next to the executable\n"
+            "  --help            print this text and exit\n"
             "\n"
-            "keys: F11 fullscreen  Esc quit\n",
+            "keys: Left/Right orbit  Up/Down tilt  W/S zoom  R reset view  F11 fullscreen  Esc quit\n",
             program);
 }

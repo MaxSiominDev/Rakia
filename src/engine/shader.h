@@ -2,6 +2,7 @@
 #define SHADER_H
 
 #include "engine/gl_compat.h"
+#include "engine/vecmath.h"
 
 #define SHADER_ATTRIBUTE_POSITION 0
 #define SHADER_ATTRIBUTE_NORMAL 1
@@ -23,5 +24,9 @@ typedef struct {
 // loads shaders/NAME.vert and shaders/NAME.frag from the assets directory
 int shader_load(Shader *shader, const char *name);
 GLint shader_uniform(Shader *shader, const char *name);
+void shader_set_int(Shader *shader, const char *name, int value);
+void shader_set_float(Shader *shader, const char *name, float value);
+void shader_set_vec3(Shader *shader, const char *name, Vec3 value);
+void shader_set_mat4(Shader *shader, const char *name, Mat4 value);
 
 #endif

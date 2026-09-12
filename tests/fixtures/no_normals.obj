@@ -1,0 +1,13 @@
+# no vn lines: a big triangle in z = 0 and a small one in y = 0 share the origin, plus a flat quad
+v 0 0 0
+v 2 0 0
+v 0 2 0
+v 0 0 1
+v 1 0 0
+v 3 0 0
+v 4 0 0
+v 4 1 0
+v 3 1 0
+f 1 2 3
+f 1 4 5
+f 6 7 8 9

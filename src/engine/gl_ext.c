@@ -11,11 +11,11 @@ static const struct {
     {"GL_ARB_vertex_shader", 1},
     {"GL_ARB_fragment_shader", 1},
     {"GL_ARB_vertex_buffer_object", 1},
-    {"GL_EXT_framebuffer_object", 0},
+    {"GL_EXT_framebuffer_object", 1},
     {"GL_EXT_framebuffer_multisample", 0},
     {"GL_EXT_framebuffer_blit", 0},
-    {"GL_ARB_texture_float", 0},
-    {"GL_EXT_texture_sRGB", 0},
+    {"GL_ARB_texture_float", 1},
+    {"GL_EXT_texture_sRGB", 1},
     {"GL_ARB_texture_non_power_of_two", 0},
     {"GL_EXT_texture_filter_anisotropic", 0}
 };
