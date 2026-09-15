@@ -6,7 +6,9 @@
 // color textures are stored as sRGB so the shader samples linear values; data maps stay linear
 typedef enum {
     TEXTURE_COLOR,
-    TEXTURE_DATA
+    TEXTURE_DATA,
+    // a cutout is color that does not tile: its edges clamp instead of filtering into the far side
+    TEXTURE_CUTOUT
 } TextureKind;
 
 GLuint texture_load(const char *path, TextureKind kind);

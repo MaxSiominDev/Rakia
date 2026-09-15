@@ -1,6 +1,7 @@
 #version 120
 
 uniform sampler2D u_panorama;
+uniform vec3 u_fog_color;
 uniform float u_exposure;
 
 varying vec3 v_ray;
@@ -20,6 +21,9 @@ void main()
     vec3 direction = normalize(v_ray);
     // equirect: the image center looks down -z, u grows toward +x, v from the nadir to the zenith
     vec2 uv = vec2(0.5 + atan(direction.x, -direction.z) / (2.0 * PI), 0.5 + asin(direction.y) / PI);
+    // the lowest band fades into the fog the terrain ends in, so the horizon has no seam
+    float haze = 1.0 - smoothstep(-0.03, 0.16, direction.y);
+    vec3 color = mix(texture2D(u_panorama, uv).rgb, u_fog_color, haze);
 
-    gl_FragColor = vec4(tonemap(texture2D(u_panorama, uv).rgb * u_exposure), 1.0);
+    gl_FragColor = vec4(tonemap(color * u_exposure), 1.0);
 }

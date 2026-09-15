@@ -100,3 +100,11 @@ void mesh_unbind(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+void mesh_free(Mesh *mesh)
+{
+    glDeleteBuffers(1, &mesh->vertex_buffer);
+    glDeleteBuffers(1, &mesh->index_buffer);
+    free(mesh->groups);
+    memset(mesh, 0, sizeof *mesh);
+}

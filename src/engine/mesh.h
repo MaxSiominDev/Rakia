@@ -19,5 +19,6 @@ int mesh_group_index(const Mesh *mesh, const char *name);
 void mesh_bind(const Mesh *mesh);
 void mesh_draw_group(const Mesh *mesh, int group);
 void mesh_unbind(void);
+void mesh_free(Mesh *mesh);
 
 #endif

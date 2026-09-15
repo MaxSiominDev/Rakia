@@ -8,8 +8,6 @@
 #include <string.h>
 
 #define SHADOW_UNIT 4
-// distance between the taps of the 3x3 filter, in shadow map texels
-#define SHADOW_TAP_SPREAD 2.0f
 #define OPAQUE_ALPHA_CUTOFF 0.5f
 
 static int create_sky_quad(Mesh *mesh)
@@ -69,6 +67,11 @@ int renderer_init(Renderer *renderer, const char *panorama_path)
         return -1;
     }
 
+    if (terrain_init(&renderer->terrain) != 0 || foliage_init(&renderer->foliage) != 0 ||
+        water_init(&renderer->water, renderer->sky_panorama) != 0) {
+        return -1;
+    }
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -81,7 +84,8 @@ static const Material *group_material(const Renderer *renderer, const Entity *en
     return group->material >= 0 ? &entity->materials[group->material] : &renderer->plain;
 }
 
-static void draw_shadow_casters(Renderer *renderer, const Scene *scene, int width, int height)
+static void draw_shadow_casters(Renderer *renderer, const Scene *scene, const Camera *camera,
+                                const Light *light, int width, int height)
 {
     Shader *shader = &renderer->depth_shader;
     int i;
@@ -113,8 +117,11 @@ static void draw_shadow_casters(Renderer *renderer, const Scene *scene, int widt
         mesh_unbind();
     }
 
-    glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
+
+    terrain_draw_depth(&renderer->terrain, shader, renderer->shadow.view_projection, renderer->shadow_center,
+                       renderer->shadow_radius);
+    foliage_draw_depth(&renderer->foliage, renderer->shadow.view_projection, camera->eye, light->sun_direction);
     shadow_end(width, height);
 }
 
@@ -152,6 +159,7 @@ static void draw_sky(Renderer *renderer, const Camera *camera, const Light *ligh
     glDisable(GL_DEPTH_TEST);
     glUseProgram(shader->program);
     glUniformMatrix3fv(shader_uniform(shader, "u_ray_basis"), 1, GL_FALSE, basis);
+    shader_set_vec3(shader, "u_fog_color", light->fog_color);
     shader_set_float(shader, "u_exposure", light->exposure);
     glBindTexture(GL_TEXTURE_2D, renderer->sky_panorama);
     mesh_bind(&renderer->sky_quad);
@@ -205,7 +213,7 @@ static void draw_groups(Renderer *renderer, const Scene *scene, int blended)
 }
 
 static void draw_meshes(Renderer *renderer, const Scene *scene, const Camera *camera, const Light *light,
-                        Mat4 view_projection)
+                        Mat4 view_projection, int blended)
 {
     Shader *shader = &renderer->mesh_shader;
     int unit;
@@ -219,14 +227,16 @@ static void draw_meshes(Renderer *renderer, const Scene *scene, const Camera *ca
     glBindTexture(GL_TEXTURE_2D, renderer->shadow.texture);
     glActiveTexture(GL_TEXTURE0);
 
-    draw_groups(renderer, scene, 0);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE);
-    draw_groups(renderer, scene, 1);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
+    if (blended) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+    }
+    draw_groups(renderer, scene, blended);
+    if (blended) {
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+    }
 
     for (unit = SHADOW_UNIT; unit >= 0; unit--) {
         glActiveTexture(GL_TEXTURE0 + (GLenum)unit);
@@ -236,14 +246,22 @@ static void draw_meshes(Renderer *renderer, const Scene *scene, const Camera *ca
 }
 
 void renderer_draw(Renderer *renderer, const Scene *scene, const Camera *camera, const Light *light,
-                   int width, int height)
+                   float time, int width, int height)
 {
     const Mat4 view_projection = m4_multiply(camera_projection(camera, width, height), camera_view(camera));
 
+    terrain_update(&renderer->terrain, camera->eye);
+    foliage_update(&renderer->foliage, camera->eye);
+
     shadow_fit(&renderer->shadow, renderer->shadow_center, renderer->shadow_radius, light->sun_direction);
-    draw_shadow_casters(renderer, scene, width, height);
+    draw_shadow_casters(renderer, scene, camera, light, width, height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     draw_sky(renderer, camera, light, width, height);
-    draw_meshes(renderer, scene, camera, light, view_projection);
+    terrain_draw(&renderer->terrain, view_projection, camera, light, &renderer->shadow);
+    draw_meshes(renderer, scene, camera, light, view_projection, 0);
+    foliage_draw(&renderer->foliage, view_projection, camera, light, &renderer->shadow);
+    water_draw(&renderer->water, view_projection, camera, light, time);
+    // blended groups come last so they compose over the sea and the plants behind them
+    draw_meshes(renderer, scene, camera, light, view_projection, 1);
 }

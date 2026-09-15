@@ -10,6 +10,8 @@
 // the sun over the hero camera's right shoulder: it lights the jet's left flank and its glow fills the top right
 #define SKY_YAW_DEGREES -13.0f
 #define EXPOSURE 0.5f
+// exp-squared fog: at this distance the haze is about two thirds of the way to the fog color
+#define FOG_DISTANCE 7000.0f
 
 // the disk is clipped in the file, so only its color (32.6:20.1:8.8) is measured and its strength chosen by eye;
 // the hemisphere values are the irradiance integrated from the file, the fog color its horizon band
@@ -31,7 +33,7 @@ Light light_golden_hour(void)
     light.sky_ambient = sky_ambient;
     light.ground_ambient = ground_ambient;
     light.fog_color = fog_color;
-    light.fog_density = 0.0f;
+    light.fog_density = 1.0f / FOG_DISTANCE;
     light.exposure = EXPOSURE;
 
     return light;

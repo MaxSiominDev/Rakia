@@ -47,8 +47,44 @@ static void test_orbit(void)
     check_close(v3_length(v3_sub(camera.eye, target)), 4.0f, 1e-5f, "the eye stays at the given distance");
 }
 
+static void test_fly(void)
+{
+    const float quarter = VEC_PI * 0.5f;
+    Camera camera;
+    FlyCamera fly;
+
+    fly.position = v3(0.0f, 100.0f, 0.0f);
+    fly.yaw = 0.0f;
+    fly.pitch = 0.0f;
+
+    camera_fly_step(&fly, v3(0.0f, 0.0f, 10.0f), 0.0f, 0.0f);
+    check_v3(fly.position, 0.0f, 100.0f, 10.0f, "yaw 0 flies north");
+    camera_fly_step(&fly, v3(4.0f, 0.0f, 0.0f), 0.0f, 0.0f);
+    check_v3(fly.position, -4.0f, 100.0f, 10.0f, "facing north, moving right goes east");
+    camera_fly_step(&fly, v3(0.0f, -6.0f, 0.0f), 0.0f, 0.0f);
+    check_v3(fly.position, -4.0f, 94.0f, 10.0f, "up and down follow the world, not the view");
+
+    camera_fly_step(&fly, v3(0.0f, 0.0f, 5.0f), quarter, 0.0f);
+    check_v3(fly.position, 1.0f, 94.0f, 10.0f, "a quarter turn to the left points the view west");
+
+    fly.yaw = 0.0f;
+    camera_fly_step(&fly, v3(0.0f, 0.0f, 0.0f), 0.0f, 10.0f * quarter);
+    check_close(fly.pitch, 85.0f * VEC_DEGREES, 1e-5f, "the view stops short of straight up");
+    camera_fly_step(&fly, v3(0.0f, 0.0f, 0.0f), 0.0f, -20.0f * quarter);
+    check_close(fly.pitch, -85.0f * VEC_DEGREES, 1e-5f, "and short of straight down");
+
+    fly.position = v3(1.0f, 2.0f, 3.0f);
+    fly.yaw = 0.0f;
+    fly.pitch = 0.0f;
+    camera_fly(&camera, &fly);
+    check_v3(camera.eye, 1.0f, 2.0f, 3.0f, "the camera sits where the fly camera is");
+    check_v3(v3_sub(camera.target, camera.eye), 0.0f, 0.0f, 1.0f, "and looks along its yaw");
+    check(camera.up.y == 1.0f, "with the world up");
+}
+
 void test_camera_main(void)
 {
     test_view_and_projection();
     test_orbit();
+    test_fly();
 }

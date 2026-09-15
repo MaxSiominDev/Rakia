@@ -5,6 +5,8 @@
 #include "engine/vecmath.h"
 
 #define SHADOW_MAP_SIZE 4096
+// distance between the taps of the 3x3 filter, in shadow map texels
+#define SHADOW_TAP_SPREAD 2.0f
 
 typedef struct {
     GLuint texture;
