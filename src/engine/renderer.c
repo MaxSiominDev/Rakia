@@ -86,6 +86,12 @@ static const Material *group_material(const Renderer *renderer, const Entity *en
     return group->material >= 0 ? &entity->materials[group->material] : &renderer->plain;
 }
 
+// a hinged group carries a transform of its own inside the model, which is how the canopy swings open
+static Mat4 group_matrix(const Entity *entity, Mat4 model, unsigned char flags)
+{
+    return flags & GROUP_HINGED ? m4_multiply(model, entity->hinge) : model;
+}
+
 static void draw_shadow_casters(Renderer *renderer, const Scene *scene, const Camera *camera,
                                 const Light *light, int width, int height)
 {
@@ -98,19 +104,22 @@ static void draw_shadow_casters(Renderer *renderer, const Scene *scene, const Ca
 
     for (i = 0; i < scene->entity_count; i++) {
         const Entity *entity = &scene->entities[i];
+        Mat4 model;
         int g;
 
         if (!entity->casts_shadow) {
             continue;
         }
-        shader_set_mat4(shader, "u_model", entity_matrix(entity));
+        model = entity_matrix(entity);
         mesh_bind(entity->mesh);
         for (g = 0; g < entity->mesh->group_count; g++) {
+            const unsigned char flags = entity->group_flags[g];
             const Material *material = group_material(renderer, entity, &entity->mesh->groups[g]);
 
-            if (entity->group_flags[g] & (GROUP_HIDDEN | GROUP_BLENDED)) {
+            if (flags & (GROUP_HIDDEN | GROUP_BLENDED)) {
                 continue;
             }
+            shader_set_mat4(shader, "u_model", group_matrix(entity, model, flags));
             glBindTexture(GL_TEXTURE_2D, material->diffuse_map);
             shader_set_float(shader, "u_opacity", material->opacity);
             shader_set_float(shader, "u_alpha_cutoff", material->alpha_test ? OPAQUE_ALPHA_CUTOFF : 0.0f);
@@ -179,12 +188,13 @@ static void draw_groups(Renderer *renderer, const Scene *scene, int blended)
 
     for (i = 0; i < scene->entity_count; i++) {
         const Entity *entity = &scene->entities[i];
+        Mat4 model;
         int g;
 
         if (entity->hidden) {
             continue;
         }
-        shader_set_mat4(shader, "u_model", entity_matrix(entity));
+        model = entity_matrix(entity);
         shader_set_vec3(shader, "u_highlight_color", entity->highlight_color);
         shader_set_float(shader, "u_highlight", entity->highlight);
         mesh_bind(entity->mesh);
@@ -195,6 +205,7 @@ static void draw_groups(Renderer *renderer, const Scene *scene, int blended)
             if ((flags & GROUP_HIDDEN) || ((flags & GROUP_BLENDED) != 0) != blended) {
                 continue;
             }
+            shader_set_mat4(shader, "u_model", group_matrix(entity, model, flags));
             material_bind(material, shader);
             shader_set_float(shader, "u_alpha_cutoff", !blended && material->alpha_test ? OPAQUE_ALPHA_CUTOFF : 0.0f);
             shader_set_int(shader, "u_double_sided", (flags & GROUP_DOUBLE_SIDED) != 0);

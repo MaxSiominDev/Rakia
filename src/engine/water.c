@@ -39,7 +39,7 @@ int water_init(Water *water, GLuint panorama)
     glUseProgram(0);
 
     // the shader tiles the ripples by world position, so one texture tile over the whole plane is fine
-    if (mesh_data_quad(&quad, PLANE_SIZE, PLANE_SIZE) != 0 || mesh_create(&water->plane, &quad) != 0) {
+    if (mesh_data_quad(&quad, PLANE_SIZE, PLANE_SIZE, PLANE_SIZE) != 0 || mesh_create(&water->plane, &quad) != 0) {
         fprintf(stderr, "out of memory building the sea\n");
         return -1;
     }

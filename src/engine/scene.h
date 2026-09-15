@@ -11,7 +11,9 @@
 enum {
     GROUP_HIDDEN = 1,
     GROUP_BLENDED = 2,
-    GROUP_DOUBLE_SIDED = 4
+    GROUP_DOUBLE_SIDED = 4,
+    // the group rides Entity.hinge instead of sitting still in the model
+    GROUP_HINGED = 8
 };
 
 typedef struct {
@@ -22,6 +24,8 @@ typedef struct {
     // indexed by the mesh groups' material numbers
     const Material *materials;
     unsigned char group_flags[SCENE_MAX_GROUPS];
+    // where the hinged groups go in the model's own frame: the canopy swinging open
+    Mat4 hinge;
     // a hidden entity is still a shadow caster, which is what the view from inside the cockpit needs
     int hidden;
     int casts_shadow;

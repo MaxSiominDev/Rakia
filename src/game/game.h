@@ -4,12 +4,13 @@
 #include "engine/camera.h"
 #include "engine/input.h"
 #include "engine/light.h"
-#include "engine/material.h"
-#include "engine/mesh.h"
 #include "engine/renderer.h"
 #include "engine/scene.h"
 #include "engine/text.h"
 #include "game/aircraft.h"
+#include "game/hangar.h"
+#include "game/takeoff.h"
+#include "game/world.h"
 
 typedef enum {
     GAME_HANGAR,
@@ -22,6 +23,8 @@ typedef enum {
 
 typedef struct {
     GameState state;
+    // what the pause opened from, which is also what the world still looks like while it is up
+    GameState resume;
     Aircraft aircraft;
     Renderer renderer;
     Scene scene;
@@ -30,21 +33,14 @@ typedef struct {
     Text hud;
     ChaseCamera chase;
     FlyCamera fly;
-    Entity *jet;
-    Mesh jet_mesh;
-    Material *jet_materials;
-    Mesh apron_mesh;
-    Material apron_material;
-    // in the jet's own frame, scaled to metres: the box the ground contact walks, the point the paused camera
-    // orbits and the pilot's eye
-    Vec3 jet_min;
-    Vec3 jet_max;
-    Vec3 jet_center;
-    Vec3 cockpit_eye;
+    World world;
+    Hangar hangar;
+    Takeoff takeoff;
     int cockpit_view;
     int inverted_pitch;
-    // seconds the note about the pitch keys stays on the HUD
+    // seconds left on the note about the pitch keys, and on the wreck before the hangar opens again
     float invert_note;
+    float crash_wait;
     // the development camera the pause offers instead of the orbit
     int free_camera;
     float view_yaw;

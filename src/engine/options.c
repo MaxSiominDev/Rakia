@@ -99,11 +99,15 @@ void options_print_usage(FILE *out, const char *program)
             "                    assets directory next to the executable\n"
             "  --help            print this text and exit\n"
             "\n"
-            "keys: flight  Up/Down pitch  Left/Right bank  A/D rudder  W/S throttle\n"
+            "keys: hangar  arrows or WASD orbit  +/- zoom  R reset view  Enter takes off\n"
+            "              Esc pause  F11 fullscreen\n"
+            "      mouse   hover a missile, the cart, a cone or the jet to light it up\n"
+            "              hold the left button to drag it over the apron, let go to drop it\n"
+            "              a missile let go under a free pylon hangs itself on it\n"
+            "      flight  Up/Down pitch  Left/Right bank  A/D rudder  W/S throttle\n"
             "              Shift afterburner  I invert the pitch keys  C cockpit view\n"
             "              Esc pause  F11 fullscreen\n"
             "      pause   arrows orbit  +/- zoom  R reset view  V free camera\n"
-            "              Q quit  Esc fly on\n"
-            "      crash   Enter restarts the flight\n",
+            "              Q quit  Esc back\n",
             program);
 }

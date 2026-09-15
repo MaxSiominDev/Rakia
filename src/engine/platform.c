@@ -2,6 +2,7 @@
 
 #include "engine/gl_ext.h"
 #include "engine/hidpi.h"
+#include "engine/modifiers.h"
 #include "engine/screenshot.h"
 #include "engine/timestep.h"
 
@@ -95,11 +96,12 @@ static void tick(int unused)
     int i;
 
     (void)unused;
-    for (i = 0; i < steps; i++) {
-        app->update(app->context, &input, TIMESTEP_DT);
-    }
-    // macOS GLUT ignores the swap interval, so frames are paced by the simulation instead of vsync
     if (steps > 0) {
+        input_shift(&input, modifiers_shift_is_down());
+        for (i = 0; i < steps; i++) {
+            app->update(app->context, &input, TIMESTEP_DT);
+        }
+        // macOS GLUT ignores the swap interval, so frames are paced by the simulation instead of vsync
         request_frame();
     }
     glutTimerFunc(TICK_INTERVAL_MS, tick, 0);
@@ -109,6 +111,8 @@ static void reshape(int width, int height)
 {
     const float scale = hidpi_scale();
 
+    input.window_width = width;
+    input.window_height = height;
     viewport_width = (int)((float)width * scale + 0.5f);
     viewport_height = (int)((float)height * scale + 0.5f);
     glViewport(0, 0, viewport_width, viewport_height);
@@ -130,16 +134,10 @@ static void toggle_fullscreen(void)
     fullscreen = !fullscreen;
 }
 
-static void read_modifiers(void)
-{
-    input_shift(&input, (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0);
-}
-
 static void keyboard(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
-    read_modifiers();
     input_key(&input, key, 1);
 }
 
@@ -147,7 +145,6 @@ static void keyboard_up(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
-    read_modifiers();
     input_key(&input, key, 0);
 }
 
@@ -155,7 +152,6 @@ static void special(int key, int x, int y)
 {
     (void)x;
     (void)y;
-    read_modifiers();
     if (key == GLUT_KEY_F11) {
         toggle_fullscreen();
         return;
@@ -167,7 +163,6 @@ static void special_up(int key, int x, int y)
 {
     (void)x;
     (void)y;
-    read_modifiers();
     input_special(&input, key, 0);
 }
 
@@ -191,6 +186,8 @@ int platform_run(const Options *run_options, const PlatformApp *run_app, int *ar
     app = run_app;
     windowed_width = options->windowed ? options->window_width : DEFAULT_WINDOW_WIDTH;
     windowed_height = options->windowed ? options->window_height : DEFAULT_WINDOW_HEIGHT;
+    input.window_width = windowed_width;
+    input.window_height = windowed_height;
 
     glutInit(argc, argv);
     glutInitDisplayString("rgb double depth samples=4");

@@ -14,6 +14,7 @@ Entity *scene_add(Scene *scene, const Mesh *mesh, const Material *materials)
     memset(entity, 0, sizeof *entity);
     entity->orientation = quat_identity();
     entity->scale = 1.0f;
+    entity->hinge = m4_identity();
     entity->mesh = mesh;
     entity->materials = materials;
     entity->casts_shadow = 1;

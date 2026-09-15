@@ -14,6 +14,8 @@
 #define JET_MAX v3(4.7f, 4.6f, 7.5f)
 
 static Game game;
+static Mesh shell;
+static MeshGroup group;
 
 static void hands_off(Input *input)
 {
@@ -40,6 +42,29 @@ static void tap(unsigned char key)
     steps(&input, 1);
 }
 
+// the world without its models: the jet and everything bolted to it, which is all the game itself moves
+static void fresh(void)
+{
+    memset(&game, 0, sizeof game);
+    memset(&shell, 0, sizeof shell);
+    memset(&group, 0, sizeof group);
+    group.index_count = 3;
+    shell.groups = &group;
+    shell.group_count = 1;
+    game.world.jet = scene_add(&game.scene, &shell, NULL);
+    game.world.gear = scene_add(&game.scene, &shell, NULL);
+    game.world.roundels = scene_add(&game.scene, &shell, NULL);
+    game.world.rails[0] = scene_add(&game.scene, &shell, NULL);
+    game.world.rails[1] = scene_add(&game.scene, &shell, NULL);
+    game.world.jet_min = JET_MIN;
+    game.world.jet_max = JET_MAX;
+    // one missile, so a loadout carried through a crash has something to hang on a pylon
+    game.world.props[0].entity = scene_add(&game.scene, &shell, NULL);
+    game.world.props[0].kind = PROP_MISSILE;
+    game.world.prop_count = 1;
+    hangar_init(&game.hangar);
+}
+
 static void place(Vec3 position, float climb_degrees)
 {
     aircraft_place(&game.aircraft, position, 0.0f, 250.0f, 0.7f);
@@ -49,16 +74,79 @@ static void place(Vec3 position, float climb_degrees)
 
 static void airborne(void)
 {
-    memset(&game, 0, sizeof game);
-    game.jet_min = JET_MIN;
-    game.jet_max = JET_MAX;
+    fresh();
     place(v3(0.0f, 600.0f, 0.0f), 0.0f);
     camera_chase_settle(&game.chase, game.aircraft.orientation);
+}
+
+static void on_apron(void)
+{
+    fresh();
+    world_park(&game.world, &game.aircraft);
+    game.state = GAME_HANGAR;
 }
 
 static float climb_sine(void)
 {
     return quat_rotate(game.aircraft.orientation, v3(0.0f, 0.0f, 1.0f)).y;
+}
+
+static void test_hangar(void)
+{
+    Input input;
+    float opened_at;
+    float opened_pitch;
+
+    on_apron();
+    check_v3(game.aircraft.position, WORLD_APRON_X, WORLD_STAND, WORLD_PARK_Z, "the jet opens parked on the apron");
+
+    tap('r');
+    opened_at = game.view_distance;
+    opened_pitch = game.view_pitch;
+    hands_off(&input);
+    input_special(&input, GLUT_KEY_UP, 1);
+    input_key(&input, '-', 1);
+    steps(&input, TIMESTEP_HZ);
+    check(game.aircraft.position.y == WORLD_STAND, "the stick does nothing on the ground");
+    check(game.view_pitch > opened_pitch, "but the arrows swing the hangar camera around");
+    check(game.view_distance > opened_at, "and the minus key backs it off");
+
+    tap('r');
+    check_close(game.view_distance, opened_at, 1e-5f, "r puts the hangar view back where it started");
+    check_close(game.view_pitch, opened_pitch, 1e-5f, "at the angle it opened on too");
+
+    tap(KEY_ESCAPE);
+    check(game.state == GAME_PAUSE && game.resume == GAME_HANGAR, "escape pauses the hangar");
+    tap(KEY_ESCAPE);
+    check(game.state == GAME_HANGAR, "and escape goes back to it");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_TAKEOFF, "enter starts the takeoff, loaded or not");
+}
+
+static void test_tint_release(void)
+{
+    on_apron();
+    game.world.props[0].entity->highlight = 0.6f;
+    tap(KEY_ENTER);
+    check(game.state == GAME_TAKEOFF, "the takeoff starts");
+    check(game.world.props[0].entity->highlight == 0.0f, "and the cursor lets go of what it was holding");
+}
+
+static void test_takeoff_handover(void)
+{
+    Input input;
+    int step;
+
+    on_apron();
+    tap(KEY_ENTER);
+    hands_off(&input);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_FLIGHT, "the script flies the jet all the way into the player's hands");
+    check(game.aircraft.position.y > WORLD_STAND + 100.0f, "well above the airbase");
+    check(game.aircraft.speed > 100.0f, "and fast enough to stay there");
 }
 
 static void test_pause(void)
@@ -68,7 +156,7 @@ static void test_pause(void)
 
     airborne();
     tap(KEY_ESCAPE);
-    check(game.state == GAME_PAUSE, "escape pauses the flight");
+    check(game.state == GAME_PAUSE && game.resume == GAME_FLIGHT, "escape pauses the flight");
 
     parked = game.aircraft.position;
     hands_off(&input);
@@ -110,25 +198,25 @@ static void test_crash(void)
     check(game.state == GAME_CRASH, "and the same three metres with the wings banked over is not");
 }
 
-static void test_restart(void)
+static void test_crash_return(void)
 {
-    const float start_x = 0.0f;
-    const float start_z = -3500.0f;
     Input input;
 
     hands_off(&input);
     airborne();
+    game.hangar.mounted[1] = 0;
     place(v3(0.0f, terrain_height(0.0f, 0.0f) - 1.0f, 0.0f), 0.0f);
     steps(&input, 1);
     check(game.state == GAME_CRASH, "the jet is on the ground");
 
-    tap(KEY_ENTER);
-    check(game.state == GAME_FLIGHT, "enter starts the flight again");
-    check_close(game.aircraft.position.z, start_z, 1.0f, "from the start pose south of the base");
-    check_close(game.aircraft.position.y, terrain_height(start_x, start_z) + 150.0f, 1.0f,
-                "a hundred and fifty metres over the ground");
-    check_close(game.aircraft.speed, 250.0f, 1.0f, "at the cruise speed");
-    check_close(game.aircraft.throttle, 0.7f, 1e-5f, "and seventy percent throttle");
+    steps(&input, 2 * TIMESTEP_HZ);
+    check(game.state == GAME_CRASH, "the wreck stays on screen for a moment");
+    // the wait is counted down a dt at a time, so it runs out a step or two past the three seconds
+    steps(&input, TIMESTEP_HZ + 2);
+    check(game.state == GAME_HANGAR, "and after three seconds the hangar opens again");
+    check_v3(game.aircraft.position, WORLD_APRON_X, WORLD_STAND, WORLD_PARK_Z, "with the jet back on its spot");
+    check(game.view_distance > 0.0f && game.view_pitch > 0.0f, "and the camera looking at it from the apron");
+    check(hangar_missiles(&game.hangar) == 1, "and the loadout it took off with");
 }
 
 static void test_keys_outside_flight(void)
@@ -153,7 +241,7 @@ static void test_keys_outside_flight(void)
     check(game.state == GAME_PAUSE && game.aircraft.throttle == 0.7f, "a paused jet ignores the throttle");
 
     tap(KEY_ENTER);
-    check(game.state == GAME_PAUSE, "and enter, which only restarts a crashed one");
+    check(game.state == GAME_PAUSE, "and enter, which only takes off from the hangar");
 }
 
 static void test_pause_views(void)
@@ -229,9 +317,12 @@ static void test_throttle_and_inversion(void)
 
 void test_game_main(void)
 {
+    test_hangar();
+    test_tint_release();
+    test_takeoff_handover();
     test_pause();
     test_crash();
-    test_restart();
+    test_crash_return();
     test_keys_outside_flight();
     test_pause_views();
     test_cockpit_view();

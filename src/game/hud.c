@@ -95,18 +95,43 @@ static void readouts(const Layout *layout, const HudState *state)
     centered(layout, layout->height - margin - VALUE_POINTS * layout->scale, VALUE_POINTS, number);
 }
 
+static void loadout(const Layout *layout, const HudState *state)
+{
+    char number[NUMBER_LENGTH];
+
+    snprintf(number, sizeof number, "MISSILES %d/%d", state->missiles, state->pylons);
+    centered(layout, MARGIN * layout->scale, VALUE_POINTS, number);
+}
+
 static void messages(const Layout *layout, const HudState *state)
 {
     const float top = layout->height * MESSAGE_TOP;
 
-    if (state->message != NULL) {
-        centered(layout, top, MESSAGE_POINTS, state->message);
+    if (state->message == NULL) {
+        // with nothing to announce, the hint is the hangar's standing line and belongs out of the way
+        if (state->hint != NULL) {
+            centered(layout, layout->height - (MARGIN + HINT_POINTS) * layout->scale, HINT_POINTS, state->hint);
+        }
+        return;
     }
+
+    centered(layout, top, MESSAGE_POINTS, state->message);
     if (state->hint != NULL) {
         const float message_line = (float)layout->text->font.line_height * glyph_scale(layout, MESSAGE_POINTS);
 
         centered(layout, top + message_line, HINT_POINTS, state->hint);
     }
+}
+
+static void layers(const Layout *layout, const HudState *state)
+{
+    if (state->in_flight) {
+        readouts(layout, state);
+        marker(layout);
+    } else {
+        loadout(layout, state);
+    }
+    messages(layout, state);
 }
 
 void hud_draw(Text *text, const HudState *state, int width, int height)
@@ -122,14 +147,10 @@ void hud_draw(Text *text, const HudState *state, int width, int height)
     text_begin(text, width, height);
     // the whole layout is drawn twice: a dark copy first, so the numbers hold up over sky and over sand alike
     text_color(text, hud_shadow);
-    readouts(&layout, state);
-    marker(&layout);
-    messages(&layout, state);
+    layers(&layout, state);
 
     layout.offset = 0.0f;
     text_color(text, hud_color);
-    readouts(&layout, state);
-    marker(&layout);
-    messages(&layout, state);
+    layers(&layout, state);
     text_end(text);
 }
