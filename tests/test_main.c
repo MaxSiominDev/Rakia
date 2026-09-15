@@ -35,6 +35,8 @@ void test_input_main(void);
 void test_assets_main(void);
 void test_mesh_data_main(void);
 void test_camera_main(void);
+void test_picking_main(void);
+void test_collision_main(void);
 void test_noise_main(void);
 void test_terrain_main(void);
 void test_foliage_main(void);
@@ -46,6 +48,8 @@ void test_obj_main(void);
 void test_image_main(void);
 void test_text_main(void);
 void test_aircraft_main(void);
+void test_takeoff_main(void);
+void test_hangar_main(void);
 void test_game_main(void);
 
 int main(void)
@@ -57,6 +61,8 @@ int main(void)
     test_assets_main();
     test_mesh_data_main();
     test_camera_main();
+    test_picking_main();
+    test_collision_main();
     test_noise_main();
     test_terrain_main();
     test_foliage_main();
@@ -68,6 +74,8 @@ int main(void)
     test_image_main();
     test_text_main();
     test_aircraft_main();
+    test_takeoff_main();
+    test_hangar_main();
     test_game_main();
 
     if (failures > 0) {

@@ -73,7 +73,7 @@ static void test_quad(void)
     MeshData quad;
     int i;
 
-    check(mesh_data_quad(&quad, 200.0f, 1.8f) == 0, "quad builds");
+    check(mesh_data_quad(&quad, 200.0f, 200.0f, 1.8f) == 0, "quad builds");
     check(quad.vertex_count == 4 && quad.index_count == 6, "quad has four vertices and two triangles");
     check(quad.group_count == 1 && quad.groups[0].index_count == 6, "quad is one group");
 
@@ -91,6 +91,46 @@ static void test_quad(void)
     check_winding(&quad, "quad triangles wind counter-clockwise seen from above");
 
     mesh_data_free(&quad);
+
+    check(mesh_data_quad(&quad, 45.0f, 2500.0f, 4.0f) == 0, "an oblong quad builds too");
+    for (i = 0; i < quad.vertex_count; i++) {
+        const MeshVertex *v = &quad.vertices[i];
+
+        check(fabsf(v->position.x) == 22.5f && fabsf(v->position.z) == 1250.0f,
+              "the runway is 45 m across and 2500 m long");
+        check(v->u == 0.0f || v->u == 45.0f / 4.0f, "and its tiles stay square across");
+        check(v->v == 0.0f || v->v == 2500.0f / 4.0f, "and along");
+    }
+    mesh_data_free(&quad);
+}
+
+static void test_cone(void)
+{
+    MeshData cone;
+    int i;
+    int on_rim = 0;
+    int at_tip = 0;
+
+    check(mesh_data_cone(&cone, 0.25f, 0.75f, 8) == 0, "cone builds");
+    check(cone.vertex_count == 33 && cone.index_count == 48, "eight facets and eight base triangles");
+    check(cone.group_count == 1 && cone.groups[0].index_count == 48, "cone is one group");
+
+    for (i = 0; i < cone.vertex_count; i++) {
+        const Vec3 p = cone.vertices[i].position;
+
+        if (p.y == 0.75f) {
+            at_tip++;
+            continue;
+        }
+        check(p.y == 0.0f, "every vertex but the tip stands on the base plane");
+        on_rim += fabsf(v3_length(v3(p.x, 0.0f, p.z)) - 0.25f) < 1e-5f;
+    }
+    check(at_tip == 8, "one tip vertex per facet, so the facets shade flat");
+    check(on_rim == 24, "two rim corners per facet and one more ring for the base cap");
+    check_frames(&cone, "cone vertex frame is orthonormal");
+    check_winding(&cone, "cone triangles wind counter-clockwise from outside");
+
+    mesh_data_free(&cone);
 }
 
 static void test_group_bounds(void)
@@ -127,5 +167,6 @@ void test_mesh_data_main(void)
 {
     test_cube();
     test_quad();
+    test_cone();
     test_group_bounds();
 }

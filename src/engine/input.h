@@ -8,11 +8,14 @@ typedef struct {
     unsigned char keys[256];
     unsigned char special_keys[INPUT_SPECIAL_KEY_COUNT];
     unsigned char buttons[INPUT_BUTTON_COUNT];
-    // GLUT only reports modifiers inside a key callback, so this is what shift was at the last key event
+    // GLUT never reports a lone Shift press, so the platform polls this one itself
     unsigned char shift;
     // window points, not pixels; see hidpi_scale
     int mouse_x;
     int mouse_y;
+    // the window in points as well, which is what turns a cursor position into a ray
+    int window_width;
+    int window_height;
 } Input;
 
 void input_key(Input *input, unsigned char key, int down);
