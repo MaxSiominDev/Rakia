@@ -93,8 +93,39 @@ static void test_quad(void)
     mesh_data_free(&quad);
 }
 
+static void test_group_bounds(void)
+{
+    MeshVertex vertices[4];
+    unsigned int indices[6] = {0, 1, 2, 1, 2, 3};
+    MeshGroup groups[2] = {{"front", 0, 0, 3}, {"back", 0, 3, 3}};
+    MeshData data;
+    Vec3 min;
+    Vec3 max;
+
+    memset(vertices, 0, sizeof vertices);
+    vertices[0].position = v3(-1.0f, 0.0f, 2.0f);
+    vertices[1].position = v3(3.0f, 1.0f, -4.0f);
+    vertices[2].position = v3(0.0f, -2.0f, 0.0f);
+    vertices[3].position = v3(5.0f, 7.0f, 6.0f);
+    data.vertices = vertices;
+    data.indices = indices;
+    data.groups = groups;
+    data.vertex_count = 4;
+    data.index_count = 6;
+    data.group_count = 2;
+
+    mesh_data_group_bounds(&data, 0, &min, &max);
+    check_v3(min, -1.0f, -2.0f, -4.0f, "a group's box holds the lowest corner it uses");
+    check_v3(max, 3.0f, 1.0f, 2.0f, "and the highest");
+
+    mesh_data_group_bounds(&data, 1, &min, &max);
+    check_v3(min, 0.0f, -2.0f, -4.0f, "another group measures only its own vertices");
+    check_v3(max, 5.0f, 7.0f, 6.0f, "on both sides");
+}
+
 void test_mesh_data_main(void)
 {
     test_cube();
     test_quad();
+    test_group_bounds();
 }

@@ -16,15 +16,14 @@ enum {
 
 typedef struct {
     Vec3 position;
-    // radians: yaw turns the nose from +z toward +x, pitch raises it, roll banks to the right
-    float yaw;
-    float pitch;
-    float roll;
+    Quat orientation;
     float scale;
     const Mesh *mesh;
     // indexed by the mesh groups' material numbers
     const Material *materials;
     unsigned char group_flags[SCENE_MAX_GROUPS];
+    // a hidden entity is still a shadow caster, which is what the view from inside the cockpit needs
+    int hidden;
     int casts_shadow;
     // the tint the hangar puts on picked objects, mixed over the diffuse color by highlight (0 to 1)
     Vec3 highlight_color;
@@ -36,7 +35,7 @@ typedef struct {
     int entity_count;
 } Scene;
 
-// at the origin, scale 1, every group visible and opaque, casting a shadow; NULL when the scene is full
+// at the origin, unturned, scale 1, every group visible and opaque, casting a shadow; NULL when the scene is full
 // or the mesh has more groups than an entity can flag
 Entity *scene_add(Scene *scene, const Mesh *mesh, const Material *materials);
 Mat4 entity_matrix(const Entity *entity);

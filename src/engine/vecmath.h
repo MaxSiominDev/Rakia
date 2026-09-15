@@ -29,6 +29,8 @@ typedef struct {
     float w;
 } Quat;
 
+float clamped(float value, float low, float high);
+
 Vec3 v3(float x, float y, float z);
 Vec3 v3_add(Vec3 a, Vec3 b);
 Vec3 v3_sub(Vec3 a, Vec3 b);

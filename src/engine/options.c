@@ -99,8 +99,11 @@ void options_print_usage(FILE *out, const char *program)
             "                    assets directory next to the executable\n"
             "  --help            print this text and exit\n"
             "\n"
-            "keys: free camera  WASD fly  Q/E down/up  arrows look  Shift fast\n"
-            "      orbit camera Left/Right orbit  Up/Down tilt  W/S zoom\n"
-            "      C switch camera  R reset view  F11 fullscreen  Esc quit\n",
+            "keys: flight  Up/Down pitch  Left/Right bank  A/D rudder  W/S throttle\n"
+            "              Shift afterburner  I invert the pitch keys  C cockpit view\n"
+            "              Esc pause  F11 fullscreen\n"
+            "      pause   arrows orbit  +/- zoom  R reset view  V free camera\n"
+            "              Q quit  Esc fly on\n"
+            "      crash   Enter restarts the flight\n",
             program);
 }

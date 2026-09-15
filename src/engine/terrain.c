@@ -52,11 +52,6 @@ static const char *const texture_sets[TERRAIN_TEXTURE_SETS][3] = {
     TERRAIN_SET("green_grass_Grass004", "Grass004")
 };
 
-static float clamped(float value, float low, float high)
-{
-    return value < low ? low : value > high ? high : value;
-}
-
 static float smooth_step(float edge0, float edge1, float value)
 {
     const float t = clamped((value - edge0) / (edge1 - edge0), 0.0f, 1.0f);
@@ -398,12 +393,6 @@ static int box_visible(const float planes[6][4], Vec3 min, Vec3 max)
     return 1;
 }
 
-static int box_near(Vec3 min, Vec3 max, Vec3 center, float radius)
-{
-    return min.x <= center.x + radius && max.x >= center.x - radius &&
-           min.z <= center.z + radius && max.z >= center.z - radius;
-}
-
 static void draw_chunk(const TerrainChunk *chunk)
 {
     mesh_bind(&chunk->mesh);
@@ -457,10 +446,12 @@ void terrain_draw(Terrain *terrain, Mat4 view_projection, const Camera *camera, 
     glUseProgram(0);
 }
 
-void terrain_draw_depth(Terrain *terrain, Shader *depth, Mat4 view_projection, Vec3 center, float radius)
+void terrain_draw_depth(Terrain *terrain, Shader *depth, Mat4 view_projection)
 {
+    float planes[6][4];
     int i;
 
+    frustum_planes(view_projection, planes);
     glUseProgram(depth->program);
     shader_set_mat4(depth, "u_view_projection", view_projection);
     shader_set_mat4(depth, "u_model", m4_identity());
@@ -474,7 +465,7 @@ void terrain_draw_depth(Terrain *terrain, Shader *depth, Mat4 view_projection, V
     for (i = 0; i < terrain->visible_count; i++) {
         const TerrainChunk *chunk = &terrain->chunks[terrain->visible[i]];
 
-        if (box_near(chunk->mesh.bounds_min, chunk->mesh.bounds_max, center, radius)) {
+        if (box_visible(planes, chunk->mesh.bounds_min, chunk->mesh.bounds_max)) {
             draw_chunk(chunk);
         }
     }

@@ -2,6 +2,11 @@
 
 #include <math.h>
 
+float clamped(float value, float low, float high)
+{
+    return value < low ? low : value > high ? high : value;
+}
+
 Vec3 v3(float x, float y, float z)
 {
     Vec3 result;

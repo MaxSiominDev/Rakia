@@ -46,9 +46,13 @@ $(TESTBIN): $(TESTSRCS) $(wildcard $(SRCDIR)/engine/*.h $(SRCDIR)/game/*.h tests
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(TESTSRCS) -o $@ $(LDFLAGS) $(LDLIBS)
 
+# the generated files are committed, so a normal build needs no Python
+font:
+	python3 tools/gen-font-atlas.py
+
 clean:
 	rm -rf $(BUILD) $(WINBUILD) $(TARGET) $(WINTARGET)
 
 -include $(OBJS:.o=.d) $(WINOBJS:.o=.d)
 
-.PHONY: all windows test clean
+.PHONY: all windows test font clean

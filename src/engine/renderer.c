@@ -61,6 +61,8 @@ int renderer_init(Renderer *renderer, const char *panorama_path)
     }
     renderer->shadow_center = v3(0.0f, 0.0f, 0.0f);
     renderer->shadow_radius = 1.0f;
+    renderer->shadow_relief = 1.0f;
+    renderer->shadow_reach = 1.0f;
 
     renderer->sky_panorama = texture_load_hdr(panorama_path);
     if (renderer->sky_panorama == 0 || create_sky_quad(&renderer->sky_quad) != 0) {
@@ -119,8 +121,7 @@ static void draw_shadow_casters(Renderer *renderer, const Scene *scene, const Ca
 
     glUseProgram(0);
 
-    terrain_draw_depth(&renderer->terrain, shader, renderer->shadow.view_projection, renderer->shadow_center,
-                       renderer->shadow_radius);
+    terrain_draw_depth(&renderer->terrain, shader, renderer->shadow.view_projection);
     foliage_draw_depth(&renderer->foliage, renderer->shadow.view_projection, camera->eye, light->sun_direction);
     shadow_end(width, height);
 }
@@ -180,6 +181,9 @@ static void draw_groups(Renderer *renderer, const Scene *scene, int blended)
         const Entity *entity = &scene->entities[i];
         int g;
 
+        if (entity->hidden) {
+            continue;
+        }
         shader_set_mat4(shader, "u_model", entity_matrix(entity));
         shader_set_vec3(shader, "u_highlight_color", entity->highlight_color);
         shader_set_float(shader, "u_highlight", entity->highlight);
@@ -253,7 +257,8 @@ void renderer_draw(Renderer *renderer, const Scene *scene, const Camera *camera,
     terrain_update(&renderer->terrain, camera->eye);
     foliage_update(&renderer->foliage, camera->eye);
 
-    shadow_fit(&renderer->shadow, renderer->shadow_center, renderer->shadow_radius, light->sun_direction);
+    shadow_fit(&renderer->shadow, renderer->shadow_center, renderer->shadow_radius, renderer->shadow_relief,
+               renderer->shadow_reach, light->sun_direction);
     draw_shadow_casters(renderer, scene, camera, light, width, height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
