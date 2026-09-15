@@ -68,7 +68,9 @@ static GLuint finish_texture(GLuint id, const char *path, GLenum error)
 
 GLuint texture_load(const char *path, TextureKind kind)
 {
-    const GLenum wrap = kind == TEXTURE_CUTOUT ? GL_CLAMP_TO_EDGE : GL_REPEAT;
+    const int screen = kind == TEXTURE_SCREEN;
+    const GLenum wrap = screen || kind == TEXTURE_CUTOUT ? GL_CLAMP_TO_EDGE : GL_REPEAT;
+    const GLenum min_filter = screen ? GL_LINEAR : GL_LINEAR_MIPMAP_LINEAR;
     Image image;
     const char *reason;
     GLuint id;
@@ -79,8 +81,8 @@ GLuint texture_load(const char *path, TextureKind kind)
         return 0;
     }
 
-    id = new_texture(GL_LINEAR_MIPMAP_LINEAR, wrap, wrap);
-    if (gl_ext_present(GLEXT_TEXTURE_FILTER_ANISOTROPIC)) {
+    id = new_texture(min_filter, wrap, wrap);
+    if (!screen && gl_ext_present(GLEXT_TEXTURE_FILTER_ANISOTROPIC)) {
         GLfloat max_anisotropy = 1.0f;
 
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotropy);
@@ -90,7 +92,7 @@ GLuint texture_load(const char *path, TextureKind kind)
                  pixel_format(image.channels), GL_UNSIGNED_BYTE, image.pixels);
     image_free(&image);
     error = glGetError();
-    if (error == GL_NO_ERROR) {
+    if (error == GL_NO_ERROR && !screen) {
         glGenerateMipmapEXT(GL_TEXTURE_2D);
         error = glGetError();
     }

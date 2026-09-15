@@ -44,6 +44,9 @@ void test_shadow_main(void);
 void test_scene_main(void);
 void test_obj_main(void);
 void test_image_main(void);
+void test_text_main(void);
+void test_aircraft_main(void);
+void test_game_main(void);
 
 int main(void)
 {
@@ -63,6 +66,9 @@ int main(void)
     test_scene_main();
     test_obj_main();
     test_image_main();
+    test_text_main();
+    test_aircraft_main();
+    test_game_main();
 
     if (failures > 0) {
         printf("%d check(s) failed\n", failures);

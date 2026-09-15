@@ -70,6 +70,7 @@ int terrain_init(Terrain *terrain);
 void terrain_update(Terrain *terrain, Vec3 center);
 void terrain_draw(Terrain *terrain, Mat4 view_projection, const Camera *camera, const Light *light,
                   const Shadow *shadow);
-void terrain_draw_depth(Terrain *terrain, Shader *depth, Mat4 view_projection, Vec3 center, float radius);
+// the light box is long and slanted, so the chunks that go into the shadow map are the ones inside it
+void terrain_draw_depth(Terrain *terrain, Shader *depth, Mat4 view_projection);
 
 #endif

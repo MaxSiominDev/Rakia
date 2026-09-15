@@ -23,9 +23,11 @@ typedef struct {
     Terrain terrain;
     Foliage foliage;
     Water water;
-    // the shadow map is fitted around this sphere every frame
+    // the shadow map is fitted around this piece of ground and the casters over it every frame
     Vec3 shadow_center;
     float shadow_radius;
+    float shadow_relief;
+    float shadow_reach;
 } Renderer;
 
 int renderer_init(Renderer *renderer, const char *panorama_path);

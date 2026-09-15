@@ -35,6 +35,8 @@ typedef struct {
 int mesh_data_cube(MeshData *data);
 // a square of edge size in the xz plane at y = 0, facing +y, with one texture tile every tile_size units
 int mesh_data_quad(MeshData *data, float size, float tile_size);
+// the box around the vertices one group uses, for parts a placement has to be measured from
+void mesh_data_group_bounds(const MeshData *data, int group, Vec3 *min, Vec3 *max);
 void mesh_data_free(MeshData *data);
 
 #endif

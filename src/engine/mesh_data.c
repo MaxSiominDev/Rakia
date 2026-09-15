@@ -1,5 +1,6 @@
 #include "engine/mesh_data.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -110,6 +111,21 @@ int mesh_data_quad(MeshData *data, float size, float tile_size)
     quad_indices(data->indices, 0);
 
     return 0;
+}
+
+void mesh_data_group_bounds(const MeshData *data, int group, Vec3 *min, Vec3 *max)
+{
+    const MeshGroup *entry = &data->groups[group];
+    int i;
+
+    *min = data->vertices[data->indices[entry->first_index]].position;
+    *max = *min;
+    for (i = 1; i < entry->index_count; i++) {
+        const Vec3 p = data->vertices[data->indices[entry->first_index + i]].position;
+
+        *min = v3(fminf(min->x, p.x), fminf(min->y, p.y), fminf(min->z, p.z));
+        *max = v3(fmaxf(max->x, p.x), fmaxf(max->y, p.y), fmaxf(max->z, p.z));
+    }
 }
 
 void mesh_data_free(MeshData *data)

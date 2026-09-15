@@ -23,8 +23,9 @@ static void test_add(void)
 
     entity = scene_add(&scene, &mesh, NULL);
     check(entity != NULL && scene.entity_count == 1, "an entity is added");
-    check(entity->scale == 1.0f && entity->casts_shadow == 1, "entity starts at scale 1 casting a shadow");
-    check(entity->mesh == &mesh && entity->yaw == 0.0f && entity->highlight == 0.0f,
+    check(entity->scale == 1.0f && !entity->hidden && entity->casts_shadow == 1,
+          "entity starts at scale 1, drawn and casting a shadow");
+    check(entity->mesh == &mesh && entity->orientation.w == 1.0f && entity->highlight == 0.0f,
           "entity starts unturned and untinted");
     check(entity->group_flags[0] == 0 && entity->group_flags[1] == 0, "groups start visible and opaque");
     check(mesh_group_index(&mesh, "cab_keep") == 1, "a group is found by name");
@@ -40,36 +41,34 @@ static void test_add(void)
 
 static void test_matrix(void)
 {
+    const Quat quarter_left = quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), HALF_PI);
+    const Quat nose_up = quat_from_axis_angle(v3(1.0f, 0.0f, 0.0f), -HALF_PI);
     Entity entity;
-    Mat4 m;
 
     memset(&entity, 0, sizeof entity);
+    entity.orientation = quat_identity();
     entity.scale = 1.0f;
 
-    entity.yaw = HALF_PI;
+    check_v3(m4_transform_direction(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 0.0f, 0.0f, 1.0f,
+             "an unturned entity keeps the model facing +z");
+
+    entity.orientation = quarter_left;
     check_v3(m4_transform_direction(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 1.0f, 0.0f, 0.0f,
-             "yaw 90 degrees turns the nose toward +x");
-    entity.yaw = 0.0f;
+             "a quarter turn about +y takes the nose toward +x");
 
-    entity.pitch = HALF_PI;
+    entity.orientation = nose_up;
     check_v3(m4_transform_direction(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 0.0f, 1.0f, 0.0f,
-             "pitch 90 degrees raises the nose");
-    entity.pitch = 0.0f;
+             "a quarter turn about the left wing raises the nose");
 
-    entity.roll = HALF_PI;
-    check_v3(m4_transform_direction(entity_matrix(&entity), v3(1.0f, 0.0f, 0.0f)), 0.0f, 1.0f, 0.0f,
-             "roll 90 degrees lifts the left wing");
-    entity.roll = 0.0f;
+    entity.orientation = quat_multiply(quarter_left, nose_up);
+    check_v3(m4_transform_direction(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 0.0f, 1.0f, 0.0f,
+             "the pitch is applied in the turned frame");
 
+    entity.orientation = quat_identity();
     entity.position = v3(1.0f, 2.0f, 3.0f);
     entity.scale = 2.0f;
-    m = entity_matrix(&entity);
-    check_v3(m4_transform_point(m, v3(0.0f, 0.0f, 1.0f)), 1.0f, 2.0f, 5.0f, "scale applies before the move");
-
-    entity.yaw = HALF_PI;
-    entity.pitch = HALF_PI;
-    check_v3(m4_transform_direction(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 0.0f, 2.0f, 0.0f,
-             "pitch is applied in the yawed frame");
+    check_v3(m4_transform_point(entity_matrix(&entity), v3(0.0f, 0.0f, 1.0f)), 1.0f, 2.0f, 5.0f,
+             "scale applies before the move");
 }
 
 void test_scene_main(void)
