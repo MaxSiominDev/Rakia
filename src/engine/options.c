@@ -99,6 +99,8 @@ void options_print_usage(FILE *out, const char *program)
             "                    assets directory next to the executable\n"
             "  --help            print this text and exit\n"
             "\n"
-            "keys: Left/Right orbit  Up/Down tilt  W/S zoom  R reset view  F11 fullscreen  Esc quit\n",
+            "keys: free camera  WASD fly  Q/E down/up  arrows look  Shift fast\n"
+            "      orbit camera Left/Right orbit  Up/Down tilt  W/S zoom\n"
+            "      C switch camera  R reset view  F11 fullscreen  Esc quit\n",
             program);
 }

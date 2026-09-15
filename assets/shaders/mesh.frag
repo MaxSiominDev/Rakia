@@ -94,6 +94,7 @@ void main()
     vec3 sun = u_sun_color * n_dot_l * sun_visibility();
     vec3 hemisphere = mix(u_ground_ambient, u_sky_ambient, 0.5 + 0.5 * normal.y);
     vec3 color;
+    float distance_to_camera;
     float fog;
 
     if (alpha < u_alpha_cutoff) {
@@ -103,7 +104,8 @@ void main()
     // metals mostly show their surroundings: the hemisphere doubles as a blurred environment reflection
     color = albedo * (1.0 - metallic) / PI * (hemisphere + sun) + fresnel * lobe * sun + f0 * hemisphere / PI;
     color += texture2D(u_emissive_map, v_uv).rgb * u_emissive;
-    fog = 1.0 - exp(-distance(u_camera_position, v_world_position) * u_fog_density);
+    distance_to_camera = distance(u_camera_position, v_world_position);
+    fog = 1.0 - exp(-distance_to_camera * distance_to_camera * u_fog_density * u_fog_density);
     color = mix(color, u_fog_color, fog);
 
     gl_FragColor = vec4(tonemap(color * u_exposure), alpha);

@@ -30,6 +30,11 @@ void input_mouse_move(Input *input, int x, int y)
     input->mouse_y = y;
 }
 
+void input_shift(Input *input, int down)
+{
+    input->shift = (unsigned char)(down != 0);
+}
+
 int input_key_is_down(const Input *input, unsigned char key)
 {
     return input->keys[tolower(key)];
@@ -49,4 +54,9 @@ int input_button_is_down(const Input *input, int button)
         return 0;
     }
     return input->buttons[button];
+}
+
+int input_shift_is_down(const Input *input)
+{
+    return input->shift;
 }

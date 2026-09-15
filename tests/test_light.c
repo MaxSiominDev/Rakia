@@ -4,6 +4,14 @@
 
 #include <math.h>
 
+// the exp-squared curve the shaders use
+static float haze(float distance, float density)
+{
+    const float d = distance * density;
+
+    return 1.0f - expf(-d * d);
+}
+
 void test_light_main(void)
 {
     const Light light = light_golden_hour();
@@ -19,5 +27,6 @@ void test_light_main(void)
     check(light.sun_color.x > light.sun_color.y && light.sun_color.y > light.sun_color.z, "sun is warm");
     check(light.sky_ambient.z > light.sky_ambient.x, "sky ambient is bluish");
     check(light.ground_ambient.y < light.sky_ambient.y, "ground ambient is darker than the sky");
-    check(light.fog_density == 0.0f, "fog density starts at zero");
+    check(haze(500.0f, light.fog_density) < 0.02f, "500 m is nearly clear");
+    check(haze(8000.0f, light.fog_density) > 0.7f, "the view distance is mostly haze");
 }

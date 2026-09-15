@@ -130,10 +130,16 @@ static void toggle_fullscreen(void)
     fullscreen = !fullscreen;
 }
 
+static void read_modifiers(void)
+{
+    input_shift(&input, (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0);
+}
+
 static void keyboard(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
+    read_modifiers();
     input_key(&input, key, 1);
 }
 
@@ -141,6 +147,7 @@ static void keyboard_up(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
+    read_modifiers();
     input_key(&input, key, 0);
 }
 
@@ -148,6 +155,7 @@ static void special(int key, int x, int y)
 {
     (void)x;
     (void)y;
+    read_modifiers();
     if (key == GLUT_KEY_F11) {
         toggle_fullscreen();
         return;
@@ -159,6 +167,7 @@ static void special_up(int key, int x, int y)
 {
     (void)x;
     (void)y;
+    read_modifiers();
     input_special(&input, key, 0);
 }
 

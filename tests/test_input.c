@@ -42,6 +42,12 @@ static void test_special_keys_and_buttons(void)
 
     input_mouse_move(&input, 40, 50);
     check(input.mouse_x == 40 && input.mouse_y == 50, "mouse position is kept");
+
+    check(input_shift_is_down(&input) == 0, "shift starts up");
+    input_shift(&input, 1);
+    check(input_shift_is_down(&input) == 1, "shift down is seen");
+    input_shift(&input, 0);
+    check(input_shift_is_down(&input) == 0, "shift up is seen");
 }
 
 void test_input_main(void)
