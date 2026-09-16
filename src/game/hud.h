@@ -3,6 +3,9 @@
 
 #include "engine/text.h"
 
+// HUD sizes are given in points on a screen this many lines tall
+#define HUD_REFERENCE_HEIGHT 720.0f
+
 typedef struct {
     // the flight instruments only mean anything once the jet has left its parking spot
     int in_flight;
@@ -18,10 +21,14 @@ typedef struct {
     int pylons;
     int targets_destroyed;
     int targets_total;
-    // the designated target's bearing off the boresight (radians, 0 up, growing clockwise) and range in
-    // metres; both meaningless while has_target is false
+    // meaningless while has_target is false
     int has_target;
-    float target_bearing;
+    // 1 for a diamond at target_x, target_y; 0 for an edge arrow there along target_angle, radians clockwise from up
+    int target_on_screen;
+    float target_x;
+    float target_y;
+    float target_angle;
+    // metres
     float target_range;
     // the same target's box projected to the screen, drawn only while locked is true
     int locked;

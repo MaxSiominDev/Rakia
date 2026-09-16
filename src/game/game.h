@@ -71,4 +71,15 @@ int game_init(void *context);
 void game_step(void *context, const Input *input, float dt);
 void game_render(void *context, int width, int height);
 
+typedef struct {
+    // 1 when the projection lands inside the inset frame
+    int on_screen;
+    float x;
+    float y;
+    // the outward direction for an edge marker: radians, 0 up, growing clockwise; meaningless when on_screen
+    float angle;
+} TargetMark;
+
+TargetMark locate_target_mark(const Camera *camera, Vec3 point, int width, int height, float margin_x, float margin_y);
+
 #endif

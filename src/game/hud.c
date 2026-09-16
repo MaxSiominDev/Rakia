@@ -5,25 +5,24 @@
 
 // the layout is written in points of a 720 point tall frame and scales with the window, so it reads the same
 // on a Retina backing as on Windows
-#define REFERENCE_HEIGHT 720.0f
 #define VALUE_POINTS 22.0f
 #define LABEL_POINTS 13.0f
 #define MESSAGE_POINTS 34.0f
 #define HINT_POINTS 15.0f
 #define MARGIN 44.0f
 #define MESSAGE_TOP 0.34f
-// the target chevron reaches this far down, so a message takes the top band only when no target is shown
-#define MESSAGE_TOP_WITH_ARROW 0.70f
 // the gun cross of a real HUD: four bars around a gap the nose sits in
 #define MARKER_ARM 18.0f
 #define MARKER_GAP 6.0f
 #define MARKER_WEIGHT 2.0f
-// the box around a lock and the chevron that points at the designated target
+
 #define LOCK_WEIGHT 2.0f
-#define ARROW_RADIUS 100.0f
+#define DIAMOND_RADIUS 16.0f
+#define DIAMOND_WEIGHT 2.0f
 #define ARROW_LENGTH 16.0f
 #define ARROW_SPREAD 9.0f
 #define ARROW_WEIGHT 2.0f
+#define LABEL_GAP 4.0f
 #define PULL_UP_POINTS 30.0f
 #define PULL_UP_Y_SHARE 0.24f
 #define SHADOW_OFFSET 2.0f
@@ -126,38 +125,58 @@ static void mission_counters(const Layout *layout, const HudState *state)
     right_aligned(layout, layout->width - margin, y, VALUE_POINTS, number);
 }
 
+static void distance_label(const Layout *layout, float x, float y, float range)
+{
+    char number[NUMBER_LENGTH];
+
+    snprintf(number, sizeof number, "%.1f KM", range / 1000.0f);
+    line(layout, x - font_width(&layout->text->font, number) * glyph_scale(layout, LABEL_POINTS) * 0.5f, y,
+        LABEL_POINTS, number);
+}
+
 static void lock_box(const Layout *layout, const HudState *state)
 {
     stroke(layout, state->lock_x0, state->lock_y0, state->lock_x1, state->lock_y0, LOCK_WEIGHT);
     stroke(layout, state->lock_x1, state->lock_y0, state->lock_x1, state->lock_y1, LOCK_WEIGHT);
     stroke(layout, state->lock_x1, state->lock_y1, state->lock_x0, state->lock_y1, LOCK_WEIGHT);
     stroke(layout, state->lock_x0, state->lock_y1, state->lock_x0, state->lock_y0, LOCK_WEIGHT);
+    distance_label(layout, (state->lock_x0 + state->lock_x1) * 0.5f,
+                   fmaxf(state->lock_y0, state->lock_y1) + LABEL_GAP * layout->scale, state->target_range);
 }
 
-// a chevron at a fixed distance from the center, swung around it by the designated target's screen bearing
-static void target_arrow(const Layout *layout, const HudState *state)
+// a fixed size in points, so it reads at any range
+static void target_diamond(const Layout *layout, const HudState *state)
 {
-    const float radius = ARROW_RADIUS * layout->scale;
+    const float r = DIAMOND_RADIUS * layout->scale;
+    const float x = state->target_x;
+    const float y = state->target_y;
+
+    stroke(layout, x, y - r, x + r, y, DIAMOND_WEIGHT);
+    stroke(layout, x + r, y, x, y + r, DIAMOND_WEIGHT);
+    stroke(layout, x, y + r, x - r, y, DIAMOND_WEIGHT);
+    stroke(layout, x - r, y, x, y - r, DIAMOND_WEIGHT);
+    distance_label(layout, x, y + r + LABEL_GAP * layout->scale, state->target_range);
+}
+
+static void target_edge_arrow(const Layout *layout, const HudState *state)
+{
     const float length = ARROW_LENGTH * layout->scale;
     const float spread = ARROW_SPREAD * layout->scale;
-    const float sine = sinf(state->target_bearing);
-    const float cosine = cosf(state->target_bearing);
-    // the chevron's own points before the rotation, with 0 bearing pointing straight up
-    const float local[3][2] = {{0.0f, -radius}, {-spread, length - radius}, {spread, length - radius}};
+    const float sine = sinf(state->target_angle);
+    const float cosine = cosf(state->target_angle);
+    // the tip is at the marker point and the back corners trail inward
+    const float local[3][2] = {{0.0f, 0.0f}, {-spread, length}, {spread, length}};
     float points[3][2];
-    char number[NUMBER_LENGTH];
     int i;
 
     for (i = 0; i < 3; i++) {
-        points[i][0] = layout->width * 0.5f + local[i][0] * cosine - local[i][1] * sine;
-        points[i][1] = layout->height * 0.5f + local[i][0] * sine + local[i][1] * cosine;
+        points[i][0] = state->target_x + local[i][0] * cosine - local[i][1] * sine;
+        points[i][1] = state->target_y + local[i][0] * sine + local[i][1] * cosine;
     }
     stroke(layout, points[0][0], points[0][1], points[1][0], points[1][1], ARROW_WEIGHT);
     stroke(layout, points[0][0], points[0][1], points[2][0], points[2][1], ARROW_WEIGHT);
-
-    snprintf(number, sizeof number, "%.1f KM", state->target_range / 1000.0f);
-    line(layout, points[0][0] - font_width(&layout->text->font, number) * glyph_scale(layout, LABEL_POINTS) * 0.5f,
-        points[0][1], LABEL_POINTS, number);
+    distance_label(layout, (points[1][0] + points[2][0]) * 0.5f, (points[1][1] + points[2][1]) * 0.5f,
+                   state->target_range);
 }
 
 static void pull_up_warning(const Layout *layout)
@@ -176,7 +195,7 @@ static void loadout(const Layout *layout, const HudState *state)
 
 static void messages(const Layout *layout, const HudState *state)
 {
-    const float top = layout->height * (state->has_target ? MESSAGE_TOP_WITH_ARROW : MESSAGE_TOP);
+    const float top = layout->height * MESSAGE_TOP;
 
     if (state->message == NULL) {
         // with nothing to announce, the hint is the hangar's standing line and belongs out of the way
@@ -201,10 +220,13 @@ static void layers(const Layout *layout, const HudState *state)
         marker(layout);
         mission_counters(layout, state);
         if (state->has_target) {
-            target_arrow(layout, state);
-        }
-        if (state->locked) {
-            lock_box(layout, state);
+            if (state->locked) {
+                lock_box(layout, state);
+            } else if (state->target_on_screen) {
+                target_diamond(layout, state);
+            } else {
+                target_edge_arrow(layout, state);
+            }
         }
         if (state->pull_up) {
             pull_up_warning(layout);
@@ -222,7 +244,7 @@ void hud_draw(Text *text, const HudState *state, int width, int height)
     layout.text = text;
     layout.width = (float)width;
     layout.height = (float)height;
-    layout.scale = (float)height / REFERENCE_HEIGHT;
+    layout.scale = (float)height / HUD_REFERENCE_HEIGHT;
     layout.offset = SHADOW_OFFSET * layout.scale;
 
     text_begin(text, width, height);

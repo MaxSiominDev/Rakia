@@ -55,6 +55,10 @@
 #define PULL_UP_LOOKAHEAD 3.0f
 #define PULL_UP_SAMPLES 4
 
+// an edge marker stays inboard of the speed and altitude columns and clear of the top and bottom rows
+#define TARGET_MARGIN_X 210.0f
+#define TARGET_MARGIN_Y 110.0f
+
 static GameState shown_state(const Game *game)
 {
     return game->state == GAME_PAUSE ? game->resume : game->state;
@@ -489,14 +493,59 @@ static int crashed(const Game *game)
     return shown_state(game) == GAME_CRASH;
 }
 
-// the angle a world point sits at around the screen center: 0 up, growing clockwise
-static float screen_bearing(const Game *game, Vec3 point)
+// uses the camera that renders the frame, so chase and cockpit views both match the screen
+TargetMark locate_target_mark(const Camera *camera, Vec3 point, int width, int height, float margin_x, float margin_y)
 {
-    const Vec3 to_point = v3_normalize(v3_sub(point, game->aircraft.position));
-    const Vec3 right = quat_rotate(game->aircraft.orientation, v3(1.0f, 0.0f, 0.0f));
-    const Vec3 up = quat_rotate(game->aircraft.orientation, v3(0.0f, 1.0f, 0.0f));
+    const Mat4 view_projection = m4_multiply(camera_projection(camera, width, height), camera_view(camera));
+    const Vec3 forward = v3_normalize(v3_sub(camera->target, camera->eye));
+    const float center_x = (float)width * 0.5f;
+    const float center_y = (float)height * 0.5f;
+    const float left = margin_x;
+    const float right = (float)width - margin_x;
+    const float top = margin_y;
+    const float bottom = (float)height - margin_y;
+    TargetMark mark;
+    float x = 0.0f;
+    float y = 0.0f;
+    const int ahead = picking_screen(view_projection, point, (float)width, (float)height, &x, &y);
 
-    return atan2f(v3_dot(to_point, right), v3_dot(to_point, up));
+    if (ahead && x >= left && x <= right && y >= top && y <= bottom) {
+        mark.on_screen = 1;
+        mark.x = x;
+        mark.y = y;
+        mark.angle = 0.0f;
+    } else if (ahead) {
+        const float dx = x - center_x;
+        const float dy = y - center_y;
+        float t = HUGE_VALF;
+
+        if (dx > 0.0f) {
+            t = fminf(t, (right - center_x) / dx);
+        } else if (dx < 0.0f) {
+            t = fminf(t, (left - center_x) / dx);
+        }
+        if (dy > 0.0f) {
+            t = fminf(t, (bottom - center_y) / dy);
+        } else if (dy < 0.0f) {
+            t = fminf(t, (top - center_y) / dy);
+        }
+
+        mark.on_screen = 0;
+        mark.x = center_x + t * dx;
+        mark.y = center_y + t * dy;
+        mark.angle = atan2f(dx, -dy);
+    } else {
+        // behind the eye: the side of the shorter turn, never the top or bottom edge
+        const Vec3 right_flat = v3(-forward.z, 0.0f, forward.x);
+        const int on_right = v3_dot(right_flat, v3_sub(point, camera->eye)) > 0.0f;
+
+        mark.on_screen = 0;
+        mark.x = on_right ? right : left;
+        mark.y = center_y;
+        mark.angle = on_right ? VEC_PI * 0.5f : -VEC_PI * 0.5f;
+    }
+
+    return mark;
 }
 
 // the screen-space rectangle the box's eight corners project into; 0 when every corner is behind the eye
@@ -579,8 +628,14 @@ static void fill_hud(const Game *game, HudState *state, int width, int height, c
         const Target *target = &game->targets.list[game->designated];
         const Vec3 center = target_center(target);
         const int on_target = weapons_locked(&game->targets, &game->aircraft, game->designated) >= 0;
+        const float scale = (float)height / HUD_REFERENCE_HEIGHT;
+        const TargetMark mark = locate_target_mark(&game->camera, center, width, height, TARGET_MARGIN_X * scale,
+                                                   TARGET_MARGIN_Y * scale);
 
-        state->target_bearing = screen_bearing(game, center);
+        state->target_on_screen = mark.on_screen;
+        state->target_x = mark.x;
+        state->target_y = mark.y;
+        state->target_angle = mark.angle;
         state->target_range = v3_length(v3_sub(center, game->aircraft.position));
         state->locked = on_target && project_box(game, target_hitbox(target), width, height, &state->lock_x0,
                                                   &state->lock_y0, &state->lock_x1, &state->lock_y1);
