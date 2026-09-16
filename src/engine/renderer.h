@@ -7,6 +7,7 @@
 #include "engine/material.h"
 #include "engine/mesh.h"
 #include "engine/particles.h"
+#include "engine/post.h"
 #include "engine/scene.h"
 #include "engine/shader.h"
 #include "engine/shadow.h"
@@ -18,6 +19,7 @@ typedef struct {
     Shader depth_shader;
     Shader sky_shader;
     Shadow shadow;
+    Post post;
     Mesh sky_quad;
     GLuint sky_panorama;
     Material plain;

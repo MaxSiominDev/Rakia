@@ -10,7 +10,6 @@ uniform vec3 u_ground_ambient;
 uniform vec3 u_fog_color;
 uniform float u_fog_density;
 uniform vec3 u_camera_position;
-uniform float u_exposure;
 
 varying vec2 v_uv;
 varying vec4 v_color;
@@ -19,14 +18,6 @@ varying vec3 v_world_position;
 const float PI = 3.14159265;
 // flat fraction of the sun added regardless of facing, since a sprite has no surface normal to shade against
 const float WRAP = 0.55;
-
-// fitted ACES curve by Krzysztof Narkowicz, the same as in mesh.frag so smoke matches the ground
-vec3 tonemap(vec3 color)
-{
-    vec3 mapped = color * (2.51 * color + 0.03) / (color * (2.43 * color + 0.59) + 0.14);
-
-    return pow(clamp(mapped, 0.0, 1.0), vec3(1.0 / 2.2));
-}
 
 void main()
 {
@@ -43,5 +34,5 @@ void main()
         color *= 1.0 - fog;
     }
 
-    gl_FragColor = vec4(tonemap(color * u_exposure), sprite.a * v_color.a);
+    gl_FragColor = vec4(color, sprite.a * v_color.a);
 }

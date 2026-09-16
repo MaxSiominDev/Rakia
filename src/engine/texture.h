@@ -11,13 +11,13 @@ typedef enum {
     // a cutout is color that does not tile: its edges clamp instead of filtering into the far side
     TEXTURE_CUTOUT,
     // a screen texture is drawn at about one texel per pixel, where a mip level would only blur it
-    TEXTURE_SCREEN
+    TEXTURE_SCREEN,
+    TEXTURE_SPRITE
 } TextureKind;
 
 GLuint texture_load(const char *path, TextureKind kind);
-// an image already in memory, such as an atlas stitched at load time; name only names it in the error
-GLuint texture_create(const Image *image, TextureKind kind, const char *name);
-// float rgb, no mipmaps, wrapping horizontally the way an equirect panorama needs
+// a cutout image is bled in place, so the caller's pixels change
+GLuint texture_create(Image *image, TextureKind kind, const char *name);
 GLuint texture_load_hdr(const char *path);
 
 #endif

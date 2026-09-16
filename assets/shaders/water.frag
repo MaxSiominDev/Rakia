@@ -11,7 +11,6 @@ uniform vec3 u_sky_ambient;
 uniform vec3 u_fog_color;
 uniform float u_fog_density;
 uniform vec3 u_camera_position;
-uniform float u_exposure;
 
 varying vec3 v_world_position;
 
@@ -22,14 +21,6 @@ const vec2 CHOP_TILE = vec2(17.0, 11.3);
 const float RIPPLE_STRENGTH = 0.22;
 // water absorbs the warm end, so what is left of the ambient is green and blue
 const vec3 DEEP_COLOR = vec3(0.018, 0.05, 0.062);
-
-// fitted ACES curve by Krzysztof Narkowicz, the same as in mesh.frag so the sea matches the shore
-vec3 tonemap(vec3 color)
-{
-    vec3 mapped = color * (2.51 * color + 0.03) / (color * (2.43 * color + 0.59) + 0.14);
-
-    return pow(clamp(mapped, 0.0, 1.0), vec3(1.0 / 2.2));
-}
 
 vec3 ripple_normal()
 {
@@ -69,5 +60,5 @@ void main()
     color += u_sun_color * lobe * fresnel;
     color = mix(color, u_fog_color, fog);
 
-    gl_FragColor = vec4(tonemap(color * u_exposure), 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

@@ -190,7 +190,7 @@ int platform_run(const Options *run_options, const PlatformApp *run_app, int *ar
     input.window_height = windowed_height;
 
     glutInit(argc, argv);
-    glutInitDisplayString("rgb double depth samples=4");
+    glutInitDisplayString("rgb double depth");
     glutInitWindowSize(windowed_width, windowed_height);
     glutCreateWindow(WINDOW_TITLE);
     if (!options->no_hidpi) {

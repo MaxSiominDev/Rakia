@@ -26,6 +26,7 @@ typedef struct {
 
 // loads shaders/NAME.vert and shaders/NAME.frag from the assets directory
 int shader_load(Shader *shader, const char *name);
+int shader_load_split(Shader *shader, const char *vertex_name, const char *fragment_name);
 GLint shader_uniform(Shader *shader, const char *name);
 void shader_set_int(Shader *shader, const char *name, int value);
 void shader_set_float(Shader *shader, const char *name, float value);

@@ -12,7 +12,6 @@ uniform vec3 u_ground_ambient;
 uniform vec3 u_fog_color;
 uniform float u_fog_density;
 uniform vec3 u_camera_position;
-uniform float u_exposure;
 
 varying vec3 v_world_position;
 varying vec3 v_normal;
@@ -20,10 +19,18 @@ varying vec2 v_uv;
 varying vec4 v_shadow_coord;
 
 const float PI = 3.14159265;
+// fade to lit near the box edge, which would otherwise cut shadows along a straight line
+const float SHADOW_EDGE_FADE = 0.15;
 
 float sun_visibility()
 {
+    float edge = min(min(v_shadow_coord.x, 1.0 - v_shadow_coord.x), min(v_shadow_coord.y, 1.0 - v_shadow_coord.y));
+    float fade = smoothstep(0.0, SHADOW_EDGE_FADE, edge);
     float lit = 0.0;
+
+    if (fade <= 0.0) {
+        return 1.0;
+    }
 
     for (int y = -1; y <= 1; y++) {
         for (int x = -1; x <= 1; x++) {
@@ -33,15 +40,7 @@ float sun_visibility()
         }
     }
 
-    return lit / 9.0;
-}
-
-// fitted ACES curve by Krzysztof Narkowicz, the same as in mesh.frag so plants match the ground
-vec3 tonemap(vec3 color)
-{
-    vec3 mapped = color * (2.51 * color + 0.03) / (color * (2.43 * color + 0.59) + 0.14);
-
-    return pow(clamp(mapped, 0.0, 1.0), vec3(1.0 / 2.2));
+    return mix(1.0, lit / 9.0, fade);
 }
 
 void main()
@@ -61,5 +60,5 @@ void main()
     color = cutout.rgb / PI * (hemisphere + sun);
     color = mix(color, u_fog_color, fog);
 
-    gl_FragColor = vec4(tonemap(color * u_exposure), 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

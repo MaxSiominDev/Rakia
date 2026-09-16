@@ -12,6 +12,8 @@
 #define HINT_POINTS 15.0f
 #define MARGIN 44.0f
 #define MESSAGE_TOP 0.34f
+// the target chevron reaches this far down, so a message takes the top band only when no target is shown
+#define MESSAGE_TOP_WITH_ARROW 0.70f
 // the gun cross of a real HUD: four bars around a gap the nose sits in
 #define MARKER_ARM 18.0f
 #define MARKER_GAP 6.0f
@@ -174,7 +176,7 @@ static void loadout(const Layout *layout, const HudState *state)
 
 static void messages(const Layout *layout, const HudState *state)
 {
-    const float top = layout->height * MESSAGE_TOP;
+    const float top = layout->height * (state->has_target ? MESSAGE_TOP_WITH_ARROW : MESSAGE_TOP);
 
     if (state->message == NULL) {
         // with nothing to announce, the hint is the hangar's standing line and belongs out of the way

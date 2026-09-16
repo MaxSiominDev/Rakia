@@ -18,7 +18,7 @@
 #define TERRAIN_VIEW_DISTANCE 8000.0f
 
 // each set is a diffuse, a normal and a roughness map
-#define TERRAIN_TEXTURE_SETS 4
+#define TERRAIN_TEXTURE_SETS 5
 
 // the finest chunk is this wide and every level doubles the size and the vertex spacing
 #define TERRAIN_CHUNK_SIZE 512.0f

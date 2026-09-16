@@ -17,12 +17,12 @@
 
 // the sun is ten degrees up, so the jet's shadow lands more than two kilometres ahead of it: the map is fitted
 // around the ground the sun ray through the jet reaches, and reaches back up to the jet itself
-#define SHADOW_RADIUS 900.0f
+#define SHADOW_RADIUS 400.0f
 // room for the dunes between the jet and its shadow
-#define SHADOW_RELIEF 200.0f
+#define SHADOW_RELIEF 150.0f
 // the hangar wants none of that reach: a tight box around the apron keeps the shelters and the cart crisp
-#define APRON_SHADOW_RADIUS 60.0f
-#define APRON_SHADOW_RELIEF 12.0f
+#define APRON_SHADOW_RADIUS 40.0f
+#define APRON_SHADOW_RELIEF 8.0f
 #define APRON_SHADOW_REACH 12.0f
 
 #define VIEW_YAW (35.0f * VEC_DEGREES)
@@ -241,6 +241,7 @@ static void step_flight(Game *game, const Input *input, float dt)
 {
     const int stick = input_special_is_down(input, GLUT_KEY_UP) - input_special_is_down(input, GLUT_KEY_DOWN);
     AircraftControls controls;
+    Vec3 nozzle;
 
     controls.pitch = (float)(game->inverted_pitch ? -stick : stick);
     controls.bank = (float)(input_special_is_down(input, GLUT_KEY_RIGHT) -
@@ -263,6 +264,9 @@ static void step_flight(Game *game, const Input *input, float dt)
     }
 
     aircraft_step(&game->aircraft, &controls, dt);
+    nozzle = v3_add(game->aircraft.position, quat_rotate(game->aircraft.orientation, game->world.nozzle_offset));
+    effects_afterburner(&game->effects, nozzle, quat_rotate(game->aircraft.orientation, v3(0.0f, 0.0f, -1.0f)),
+                        game->aircraft.speed, game->aircraft.afterburner && !cockpit_camera(game), dt);
     camera_chase_step(&game->chase, game->aircraft.orientation, dt);
     if (game->invert_note > 0.0f) {
         game->invert_note -= dt;

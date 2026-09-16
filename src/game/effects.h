@@ -30,6 +30,9 @@ typedef struct {
     int flash_sheet;
     int fire_sheet;
     int smoke_sheet;
+    int flame_sheet;
+    // seconds to the next afterburner emission
+    float afterburner_timer;
     // reseeded every mission, so sprite spread and frame picks come out the same each time
     unsigned int random;
 } Effects;
@@ -43,5 +46,8 @@ void effects_explosion(Effects *effects, Vec3 position, float size);
 void effects_burst(Effects *effects, Vec3 position, float size);
 // the scorched ground under a wreck or an impact, lying along the slope it is burnt into
 void effects_mark(Effects *effects, Vec3 position, Vec3 normal, float size);
+void effects_afterburner(Effects *effects, Vec3 position, Vec3 direction, float speed, int active, float dt);
+void effects_exhaust(Effects *effects, Vec3 position, Vec3 direction, float dt);
+void effects_trail_puff(Effects *effects, Vec3 position);
 
 #endif

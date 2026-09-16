@@ -24,6 +24,9 @@ typedef struct {
     // the target it was fired at, -1 when it left the rail without a lock
     int target;
     float time;
+    // seconds to the next exhaust puff and the next trail puff
+    float exhaust_timer;
+    float trail_timer;
     int flying;
 } Missile;
 

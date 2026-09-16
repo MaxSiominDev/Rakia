@@ -72,6 +72,8 @@ typedef struct {
     int prop_count;
     // where a mounted missile's center hangs, in the jet's own frame, metres
     Vec3 pylons[WORLD_PYLONS];
+    // in the jet's own frame, metres
+    Vec3 nozzle_offset;
     // in the jet's own frame, scaled to metres: the box the ground contact walks, the point a camera orbits
     // and the pilot's eye
     Vec3 jet_min;
