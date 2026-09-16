@@ -64,7 +64,8 @@ typedef struct {
     const Material *missile_materials;
     Entity *jet;
     Entity *gear;
-    Entity *roundels;
+    // the roundels and the tail menorah, blended quads on one mesh riding the jet
+    Entity *markings;
     // the two air-to-air missiles bolted to the wingtip rails for looks, and where they ride
     Entity *rails[2];
     Vec3 rail_offsets[2];
@@ -93,7 +94,7 @@ void world_park(World *world, Aircraft *aircraft);
 void world_canopy(World *world, float shut);
 // where a point given in the jet's own frame, in metres, ends up in the world
 Vec3 world_on_jet(const World *world, Vec3 offset);
-// the parts bolted to the jet follow it: the gear, the roundels and the wingtip missiles
+// the parts bolted to the jet follow it: the gear, the markings and the wingtip missiles
 void world_follow(World *world);
 
 #endif

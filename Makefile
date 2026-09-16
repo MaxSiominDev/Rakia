@@ -50,9 +50,12 @@ $(TESTBIN): $(TESTSRCS) $(wildcard $(SRCDIR)/engine/*.h $(SRCDIR)/game/*.h tests
 font:
 	python3 tools/gen-font-atlas.py
 
+markings:
+	python3 tools/gen-markings.py
+
 clean:
 	rm -rf $(BUILD) $(WINBUILD) $(TARGET) $(WINTARGET)
 
 -include $(OBJS:.o=.d) $(WINOBJS:.o=.d)
 
-.PHONY: all windows test font clean
+.PHONY: all windows test font markings clean

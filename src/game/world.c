@@ -25,7 +25,8 @@
 
 #define APRON_TEXTURE "raw/textures/apron_concrete_concrete_pavement/concrete_pavement"
 #define RUNWAY_TEXTURE "raw/textures/runway_asphalt_clean_asphalt/clean_asphalt"
-#define ROUNDEL_TEXTURE "raw/markings/iaf-roundel"
+#define ROUNDEL_TEXTURE "generated/roundel"
+#define MENORAH_TEXTURE "generated/menorah"
 
 #define APRON_SIZE 200.0f
 #define APRON_TILE 1.8f
@@ -93,6 +94,14 @@
 #define ROUNDEL_SIDE_Y 1.69f
 #define ROUNDEL_SIDE_Z 0.75f
 #define ROUNDEL_SIDE_HALF 0.34f
+
+// the menorah sits proud of the tail fin's flat part the same way, one on each side, below the swept tip
+#define MENORAH_COUNT 2
+#define MENORAH_X 0.11f
+#define MENORAH_Y 2.85f
+#define MENORAH_Z (-6.40f)
+#define MENORAH_HALF_WIDTH 0.594f
+#define MENORAH_HALF_HEIGHT 0.45f
 
 #define CANOPY_OPEN (40.0f * VEC_DEGREES)
 
@@ -251,17 +260,22 @@ static Mesh *build_paint(World *world)
     return build_mesh(world, &data);
 }
 
-static Mesh *build_roundels(World *world)
+// group 0 is the four roundels (material 0); group 1 is the two menorah quads on the fin (material 1)
+static Mesh *build_markings(World *world)
 {
     const Vec3 up = v3(0.0f, 1.0f, 0.0f);
     const Vec3 nose = v3(0.0f, 0.0f, 1.0f);
+    const Vec3 tail = v3(0.0f, 0.0f, -1.0f);
     MeshData data;
 
-    if (mesh_data_reserve(&data, ROUNDEL_COUNT * 4, ROUNDEL_COUNT * 6, 1) != 0) {
+    if (mesh_data_reserve(&data, (ROUNDEL_COUNT + MENORAH_COUNT) * 4, (ROUNDEL_COUNT + MENORAH_COUNT) * 6, 2) != 0) {
         fprintf(stderr, "out of memory drawing the markings\n");
         return NULL;
     }
     data.groups[0].index_count = ROUNDEL_COUNT * 6;
+    data.groups[1].material = 1;
+    data.groups[1].first_index = ROUNDEL_COUNT * 6;
+    data.groups[1].index_count = MENORAH_COUNT * 6;
 
     mesh_data_rect(&data, 0, v3(ROUNDEL_WING_X, ROUNDEL_WING_Y, ROUNDEL_WING_Z), up, v3(1.0f, 0.0f, 0.0f),
                    ROUNDEL_WING_HALF, ROUNDEL_WING_HALF);
@@ -271,6 +285,12 @@ static Mesh *build_roundels(World *world)
                    ROUNDEL_SIDE_HALF, ROUNDEL_SIDE_HALF);
     mesh_data_rect(&data, 3, v3(-ROUNDEL_SIDE_X, ROUNDEL_SIDE_Y, ROUNDEL_SIDE_Z), v3(-1.0f, 0.0f, 0.0f), nose,
                    ROUNDEL_SIDE_HALF, ROUNDEL_SIDE_HALF);
+
+    // right is chosen so up (normal cross right) points to the world +y on both sides, keeping the menorah upright
+    mesh_data_rect(&data, 4, v3(MENORAH_X, MENORAH_Y, MENORAH_Z), v3(1.0f, 0.0f, 0.0f), tail,
+                   MENORAH_HALF_WIDTH, MENORAH_HALF_HEIGHT);
+    mesh_data_rect(&data, 5, v3(-MENORAH_X, MENORAH_Y, MENORAH_Z), v3(-1.0f, 0.0f, 0.0f), nose,
+                   MENORAH_HALF_WIDTH, MENORAH_HALF_HEIGHT);
 
     return build_mesh(world, &data);
 }
@@ -636,22 +656,26 @@ static int load_jet(World *world, Scene *scene)
     // the two are taken in order, so the gear mesh's second group finds the rubber right after the metal
     Material *legs = plain_material(world, v3(0.60f, 0.62f, 0.64f), 0.35f, 0.8f);
     Material *tires = plain_material(world, v3(0.02f, 0.02f, 0.022f), 1.0f, 0.0f);
-    Material *paint = plain_material(world, v3(1.0f, 1.0f, 1.0f), 0.6f, 0.0f);
+    // the two are taken in order too, so the markings mesh's second group finds the menorah right after the roundels
+    Material *roundel_paint = plain_material(world, v3(1.0f, 1.0f, 1.0f), 0.6f, 0.0f);
+    Material *menorah_paint = plain_material(world, v3(1.0f, 1.0f, 1.0f), 0.6f, 0.0f);
     Model model;
     Mesh *mesh;
     Material *materials;
     Mesh *gear_mesh;
-    Mesh *roundel_mesh;
+    Mesh *markings_mesh;
     Prop *prop;
     int i;
 
-    if (legs == NULL || tires == NULL || paint == NULL) {
+    if (legs == NULL || tires == NULL || roundel_paint == NULL || menorah_paint == NULL) {
         return -1;
     }
-    paint->diffuse_map = named_texture(ROUNDEL_TEXTURE, "_1024.png", TEXTURE_CUTOUT);
+    roundel_paint->diffuse_map = named_texture(ROUNDEL_TEXTURE, ".png", TEXTURE_CUTOUT);
+    menorah_paint->diffuse_map = named_texture(MENORAH_TEXTURE, ".png", TEXTURE_CUTOUT);
     gear_mesh = build_gear(world);
-    roundel_mesh = build_roundels(world);
-    if (paint->diffuse_map == 0 || gear_mesh == NULL || roundel_mesh == NULL) {
+    markings_mesh = build_markings(world);
+    if (roundel_paint->diffuse_map == 0 || menorah_paint->diffuse_map == 0 || gear_mesh == NULL ||
+        markings_mesh == NULL) {
         return -1;
     }
 
@@ -677,14 +701,15 @@ static int load_jet(World *world, Scene *scene)
     }
 
     world->gear = place(scene, gear_mesh, legs, v3(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
-    world->roundels = place(scene, roundel_mesh, paint, v3(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
-    if (world->gear == NULL || world->roundels == NULL || load_rails(world, scene, &model) != 0) {
+    world->markings = place(scene, markings_mesh, roundel_paint, v3(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
+    if (world->gear == NULL || world->markings == NULL || load_rails(world, scene, &model) != 0) {
         obj_free(&model);
         return -1;
     }
     obj_free(&model);
-    world->roundels->group_flags[0] = GROUP_BLENDED;
-    world->roundels->casts_shadow = 0;
+    world->markings->group_flags[0] = GROUP_BLENDED;
+    world->markings->group_flags[1] = GROUP_BLENDED;
+    world->markings->casts_shadow = 0;
 
     world->jet_min = v3_scale(mesh->bounds_min, JET_SCALE);
     world->jet_max = v3_scale(mesh->bounds_max, JET_SCALE);
@@ -746,7 +771,7 @@ void world_follow(World *world)
     int i;
 
     ride_jet(world, world->gear, origin);
-    ride_jet(world, world->roundels, origin);
+    ride_jet(world, world->markings, origin);
     for (i = 0; i < 2; i++) {
         ride_jet(world, world->rails[i], world->rail_offsets[i]);
     }

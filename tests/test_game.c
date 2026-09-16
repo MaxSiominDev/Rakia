@@ -56,7 +56,7 @@ static void fresh(void)
     shell.group_count = 1;
     game.world.jet = scene_add(&game.scene, &shell, NULL);
     game.world.gear = scene_add(&game.scene, &shell, NULL);
-    game.world.roundels = scene_add(&game.scene, &shell, NULL);
+    game.world.markings = scene_add(&game.scene, &shell, NULL);
     game.world.rails[0] = scene_add(&game.scene, &shell, NULL);
     game.world.rails[1] = scene_add(&game.scene, &shell, NULL);
     game.world.jet_min = JET_MIN;
