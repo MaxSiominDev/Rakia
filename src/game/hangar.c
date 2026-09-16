@@ -103,36 +103,12 @@ static void push_clear(const Hangar *hangar, World *world, int index)
     }
 }
 
-static void take_hold(Hangar *hangar, World *world, Ray ray, int index)
+static void hang_at(World *world, int index, int pylon)
 {
-    Prop *prop = &world->props[index];
-    const float plane = prop->entity->position.y;
-    const int pylon = pylon_of(hangar, index);
-    Vec3 hit;
+    Entity *entity = world->props[index].entity;
 
-    if (!picking_ground(ray, plane, &hit)) {
-        return;
-    }
-    if (pylon >= 0) {
-        hangar->mounted[pylon] = -1;
-    }
-    // a missile taken off a rail comes away level again
-    prop->entity->orientation = quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), prop->yaw);
-    hangar->dragged = index;
-    hangar->plane = plane;
-    hangar->grab = v3_sub(prop->entity->position, hit);
-}
-
-static void drag(Hangar *hangar, World *world, Ray ray)
-{
-    Prop *prop = &world->props[hangar->dragged];
-    Vec3 hit;
-
-    if (!picking_ground(ray, hangar->plane, &hit)) {
-        return;
-    }
-    prop->entity->position = v3_add(hit, hangar->grab);
-    push_clear(hangar, world, hangar->dragged);
+    entity->position = world_on_jet(world, world->pylons[pylon]);
+    entity->orientation = world->jet->orientation;
 }
 
 static int free_pylon_near(const Hangar *hangar, const World *world, Vec3 position)
@@ -155,10 +131,52 @@ static int free_pylon_near(const Hangar *hangar, const World *world, Vec3 positi
     return found;
 }
 
+static void take_hold(Hangar *hangar, World *world, Ray ray, int index)
+{
+    Prop *prop = &world->props[index];
+    const float plane = prop->entity->position.y;
+    const int pylon = pylon_of(hangar, index);
+    Vec3 hit;
+
+    if (!picking_ground(ray, plane, &hit)) {
+        return;
+    }
+    if (pylon >= 0) {
+        hangar->mounted[pylon] = -1;
+    }
+    // a missile taken off a rail comes away level again
+    prop->entity->orientation = quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), prop->yaw);
+    hangar->dragged = index;
+    hangar->plane = plane;
+    hangar->grab = v3_sub(prop->entity->position, hit);
+    hangar->drag_at = prop->entity->position;
+}
+
+static void drag(Hangar *hangar, World *world, Ray ray)
+{
+    Prop *prop = &world->props[hangar->dragged];
+    Vec3 hit;
+    int pylon;
+
+    if (!picking_ground(ray, hangar->plane, &hit)) {
+        return;
+    }
+    hangar->drag_at = v3_add(hit, hangar->grab);
+    pylon = prop->kind == PROP_MISSILE ? free_pylon_near(hangar, world, hangar->drag_at) : -1;
+    if (pylon >= 0) {
+        hang_at(world, hangar->dragged, pylon);
+        return;
+    }
+    prop->entity->position = hangar->drag_at;
+    // a preview may have left the jet's orientation on it
+    prop->entity->orientation = quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), prop->yaw);
+    push_clear(hangar, world, hangar->dragged);
+}
+
 static void let_go(Hangar *hangar, World *world)
 {
     Prop *prop = &world->props[hangar->dragged];
-    const int pylon = prop->kind == PROP_MISSILE ? free_pylon_near(hangar, world, prop->entity->position) : -1;
+    const int pylon = prop->kind == PROP_MISSILE ? free_pylon_near(hangar, world, hangar->drag_at) : -1;
 
     if (pylon >= 0) {
         hangar->mounted[pylon] = hangar->dragged;
@@ -249,10 +267,7 @@ void hangar_carry(const Hangar *hangar, World *world)
 
     for (i = 0; i < WORLD_PYLONS; i++) {
         if (hangar->mounted[i] >= 0) {
-            Entity *entity = world->props[hangar->mounted[i]].entity;
-
-            entity->position = world_on_jet(world, world->pylons[i]);
-            entity->orientation = world->jet->orientation;
+            hang_at(world, hangar->mounted[i], i);
         }
     }
 }

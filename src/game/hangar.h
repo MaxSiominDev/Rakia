@@ -11,6 +11,8 @@ typedef struct {
     // the height the drag runs at and the step from the point under the cursor to the prop's own origin
     float plane;
     Vec3 grab;
+    // where the cursor puts the dragged prop, kept apart because the entity may be previewing a pylon
+    Vec3 drag_at;
     // the button one step ago, so a press can be told from a hold
     int held;
     // the missile hanging on each pylon, -1 while the pylon is free
