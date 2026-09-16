@@ -150,6 +150,63 @@ static void test_pylon_snap(void)
     check_close(world.props[1].entity->position.y, MISSILE_REST, 1e-6f, "and puts it back on the apron");
 }
 
+static void test_magnet_preview(void)
+{
+    apron();
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 0);
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 1);
+
+    hangar_step(&hangar, &world, onto(4.0f, -2.0f), 1);
+    check_v3(world.props[1].entity->position, 3.0f, 1.65f, -2.0f,
+             "reaching a free pylon shows the missile already hanging there while the button is still held");
+    check(hangar.dragged == 1, "the cursor still holds it");
+    check(hangar_missiles(&hangar) == 0, "nothing is mounted yet, only shown in preview");
+
+    hangar_step(&hangar, &world, onto(4.0f, -2.0f), 0);
+    check(hangar.mounted[0] == 1 && hangar_missiles(&hangar) == 1, "letting go over the preview mounts it");
+}
+
+static void test_magnet_leaves_reach(void)
+{
+    apron();
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 0);
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 1);
+    hangar_step(&hangar, &world, onto(4.0f, -2.0f), 1);
+    check_v3(world.props[1].entity->position, 3.0f, 1.65f, -2.0f, "previewed on the pylon first");
+
+    hangar_step(&hangar, &world, onto(20.0f, 20.0f), 1);
+    check_v3(world.props[1].entity->position, 20.0f, 0.92f, 20.0f,
+             "moving out of reach drops the preview and the missile follows the cursor again, at drag height");
+    check(hangar_missiles(&hangar) == 0, "still nothing mounted");
+}
+
+static void test_magnet_pylon_taken(void)
+{
+    apron();
+    drag_to(1, 12.0f, 0.0f, 3.0f, -2.0f);
+    check(hangar.mounted[0] == 1, "the first missile takes the pylon");
+
+    hangar_step(&hangar, &world, onto(12.0f, 6.0f), 0);
+    hangar_step(&hangar, &world, onto(12.0f, 6.0f), 1);
+    hangar_step(&hangar, &world, onto(4.0f, -2.0f), 1);
+    check_v3(world.props[2].entity->position, 4.0f, 0.92f, -2.0f,
+             "a taken pylon offers no preview, so the second missile just follows the cursor");
+    check(hangar_missiles(&hangar) == 1, "and mounting stays at one");
+}
+
+static void test_magnet_tracks_cursor(void)
+{
+    apron();
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 0);
+    hangar_step(&hangar, &world, onto(12.0f, 0.0f), 1);
+
+    hangar_step(&hangar, &world, onto(4.0f, -2.0f), 1);
+    check_v3(world.props[1].entity->position, 3.0f, 1.65f, -2.0f, "in reach on the first step");
+    hangar_step(&hangar, &world, onto(3.6f, -1.7f), 1);
+    check_v3(world.props[1].entity->position, 3.0f, 1.65f, -2.0f, "still in reach a step later, from the new cursor spot");
+    check(hangar_missiles(&hangar) == 0, "the button was never let go");
+}
+
 static void test_carry(void)
 {
     apron();
@@ -292,6 +349,10 @@ void test_hangar_main(void)
     test_hover_and_grab();
     test_drag();
     test_pylon_snap();
+    test_magnet_preview();
+    test_magnet_leaves_reach();
+    test_magnet_pylon_taken();
+    test_magnet_tracks_cursor();
     test_carry();
     test_push_apart();
     test_high_pylon();
