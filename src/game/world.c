@@ -392,6 +392,8 @@ static int load_stores(World *world)
     if (world_load(world, JSOW_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
+    // the metal-rough maps read almost fully metallic and mirror too much sky; every model gets this scale
+    materials[0].metallic *= 0.4f;
     world->missile_mesh = mesh;
     world->missile_materials = materials;
 
@@ -588,6 +590,22 @@ static Vec3 holder_offset(const Model *model, const Mesh *mesh, const char *name
               (min.z + max.z) * 0.5f * JET_SCALE);
 }
 
+// center of the nozzle group's aft face
+static Vec3 measure_nozzle(const Model *model, const Mesh *mesh)
+{
+    const int group = mesh_group_index(mesh, "nozzle");
+    Vec3 min;
+    Vec3 max;
+
+    if (group < 0) {
+        fprintf(stderr, "%s has no group nozzle\n", JET_MODEL);
+        return v3(0.0f, 0.0f, 0.0f);
+    }
+    mesh_data_group_bounds(&model->data, group, &min, &max);
+
+    return v3((min.x + max.x) * 0.5f * JET_SCALE, (min.y + max.y) * 0.5f * JET_SCALE, min.z * JET_SCALE);
+}
+
 static int load_rails(World *world, Scene *scene, const Model *jet_model)
 {
     Mesh *mesh;
@@ -597,6 +615,8 @@ static int load_rails(World *world, Scene *scene, const Model *jet_model)
     if (world_load(world, AIM9_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
+    // same metalness scale as the store missiles
+    materials[0].metallic *= 0.4f;
 
     for (i = 0; i < 2; i++) {
         world->rail_offsets[i] = holder_offset(jet_model, world->jet->mesh, rail_groups[i],
@@ -615,7 +635,7 @@ static int load_jet(World *world, Scene *scene)
     const float missile_half = world->missile_mesh->bounds_max.y * JSOW_SCALE;
     // the two are taken in order, so the gear mesh's second group finds the rubber right after the metal
     Material *legs = plain_material(world, v3(0.60f, 0.62f, 0.64f), 0.35f, 0.8f);
-    Material *tires = plain_material(world, v3(0.035f, 0.035f, 0.040f), 0.85f, 0.0f);
+    Material *tires = plain_material(world, v3(0.02f, 0.02f, 0.022f), 1.0f, 0.0f);
     Material *paint = plain_material(world, v3(1.0f, 1.0f, 1.0f), 0.6f, 0.0f);
     Model model;
     Mesh *mesh;
@@ -642,6 +662,8 @@ static int load_jet(World *world, Scene *scene)
         obj_free(&model);
         return -1;
     }
+    // same metalness scale as the store missiles
+    materials[0].metallic *= 0.4f;
     // world_park puts it on its spot once everything that rides on it exists
     world->jet = place(scene, mesh, materials, v3(0.0f, 0.0f, 0.0f), WORLD_PARK_HEADING, JET_SCALE);
     if (world->jet == NULL) {
@@ -649,6 +671,7 @@ static int load_jet(World *world, Scene *scene)
         return -1;
     }
     measure_canopy(world, &model);
+    world->nozzle_offset = measure_nozzle(&model, mesh);
     for (i = 0; i < WORLD_PYLONS; i++) {
         world->pylons[i] = holder_offset(&model, mesh, pylon_groups[i], missile_half);
     }

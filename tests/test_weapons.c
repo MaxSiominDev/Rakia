@@ -206,6 +206,81 @@ static void test_flying_count(void)
     check(weapons_flying(&weapons) == 0, "and reset abandons what is left");
 }
 
+static void test_launch_resets_timers(void)
+{
+    setup();
+    weapons.shots[0].exhaust_timer = 5.0f;
+    weapons.shots[0].trail_timer = 5.0f;
+
+    weapons_launch(&weapons, &hangar, &world, &aircraft, -1);
+    check(weapons.shots[0].exhaust_timer == 0.0f, "a launch resets the exhaust timer so the first puff is immediate");
+    check(weapons.shots[0].trail_timer == 0.0f, "and the trail timer the same way");
+}
+
+// inside the boost window
+#define EFFECT_TEST_SECONDS 0.5f
+
+static void test_effect_rates(void)
+{
+    int exhaust_events = 0;
+    int trail_events = 0;
+    int step;
+
+    setup();
+    weapons_launch(&weapons, &hangar, &world, &aircraft, -1);
+
+    for (step = 0; step < (int)(EFFECT_TEST_SECONDS * TIMESTEP_HZ); step++) {
+        const float exhaust_before = weapons.shots[0].exhaust_timer;
+        const float trail_before = weapons.shots[0].trail_timer;
+
+        weapons_step(&weapons, &targets, &effects, TIMESTEP_DT);
+        if (weapons.shots[0].exhaust_timer > exhaust_before) {
+            exhaust_events++;
+        }
+        if (weapons.shots[0].trail_timer > trail_before) {
+            trail_events++;
+        }
+    }
+
+    check(exhaust_events >= (int)(EFFECT_TEST_SECONDS / 0.03f) &&
+          exhaust_events <= (int)(EFFECT_TEST_SECONDS / 0.02f) + 1,
+          "the exhaust fires roughly once every 0.02 to 0.03 s while the boost burns");
+    check(trail_events >= (int)(EFFECT_TEST_SECONDS / 0.15f) && trail_events <= (int)(EFFECT_TEST_SECONDS / 0.10f) + 1,
+          "the trail puffs roughly once every 0.10 to 0.15 s");
+}
+
+// mirrors BOOST_SECONDS in weapons.c
+#define TEST_BOOST_SECONDS 2.0f
+
+static void test_exhaust_cutoff(void)
+{
+    const int steps = (int)((TEST_BOOST_SECONDS + 1.0f) * TIMESTEP_HZ);
+    int fired_after_boost = 0;
+    int trail_fired_after_boost = 0;
+    int step;
+
+    setup();
+    weapons_launch(&weapons, &hangar, &world, &aircraft, -1);
+
+    for (step = 0; step < steps; step++) {
+        const float exhaust_before = weapons.shots[0].exhaust_timer;
+        const float trail_before = weapons.shots[0].trail_timer;
+        const int past_boost = weapons.shots[0].time > TEST_BOOST_SECONDS;
+
+        weapons_step(&weapons, &targets, &effects, TIMESTEP_DT);
+        if (past_boost && weapons.shots[0].exhaust_timer > exhaust_before) {
+            fired_after_boost++;
+        }
+        if (past_boost && weapons.shots[0].trail_timer > trail_before) {
+            trail_fired_after_boost++;
+        }
+    }
+
+    check(weapons.shots[0].flying, "the missile is still airborne a second past the boost window");
+    check(fired_after_boost == 0, "the exhaust stops resetting once the boost motor burns out");
+    check(trail_fired_after_boost > 0, "but the trail keeps puffing after the boost, independent of it");
+}
+
 void test_weapons_main(void)
 {
     test_guided_hit();
@@ -216,4 +291,7 @@ void test_weapons_main(void)
     test_step_hit();
     test_reset_flying();
     test_flying_count();
+    test_launch_resets_timers();
+    test_effect_rates();
+    test_exhaust_cutoff();
 }

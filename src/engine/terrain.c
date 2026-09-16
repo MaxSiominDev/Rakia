@@ -49,7 +49,8 @@ static const char *const texture_sets[TERRAIN_TEXTURE_SETS][3] = {
     TERRAIN_SET("sand_dunes_Ground097", "Ground097"),
     TERRAIN_SET("rocky_ground_rocky_trail_02", "rocky_trail_02"),
     TERRAIN_SET("rock_cliff_Rock029", "Rock029"),
-    TERRAIN_SET("green_grass_Grass004", "Grass004")
+    TERRAIN_SET("green_grass_Grass004", "Grass004"),
+    TERRAIN_SET("dry_grass_withered_grass", "withered_grass")
 };
 
 static float smooth_step(float edge0, float edge1, float value)

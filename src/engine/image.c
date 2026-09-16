@@ -113,6 +113,84 @@ int image_atlas(Image *atlas, const char *const *paths, int count, int columns, 
     return atlas->pixels != NULL ? 0 : -1;
 }
 
+// reads only the previous pass, so each pass grows the colored area by one texel
+static void bleed_pass(unsigned char *work, const unsigned char *before, int width, int height)
+{
+    int x;
+    int y;
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+            const unsigned char *center = before + ((size_t)y * (size_t)width + (size_t)x) * 4;
+            unsigned char *out = work + ((size_t)y * (size_t)width + (size_t)x) * 4;
+            int sum[3] = {0, 0, 0};
+            int count = 0;
+            int dx;
+            int dy;
+
+            if (center[3] != 0) {
+                continue;
+            }
+            for (dy = -1; dy <= 1; dy++) {
+                for (dx = -1; dx <= 1; dx++) {
+                    const int nx = x + dx;
+                    const int ny = y + dy;
+                    const unsigned char *neighbor;
+
+                    if ((dx == 0 && dy == 0) || nx < 0 || nx >= width || ny < 0 || ny >= height) {
+                        continue;
+                    }
+                    neighbor = before + ((size_t)ny * (size_t)width + (size_t)nx) * 4;
+                    if (neighbor[3] == 0) {
+                        continue;
+                    }
+                    sum[0] += neighbor[0];
+                    sum[1] += neighbor[1];
+                    sum[2] += neighbor[2];
+                    count++;
+                }
+            }
+            if (count > 0) {
+                out[0] = (unsigned char)(sum[0] / count);
+                out[1] = (unsigned char)(sum[1] / count);
+                out[2] = (unsigned char)(sum[2] / count);
+                out[3] = 255;
+            }
+        }
+    }
+}
+
+void image_bleed(Image *image, int passes)
+{
+    const size_t count = (size_t)image->width * (size_t)image->height;
+    const size_t bytes = count * 4;
+    unsigned char *work = malloc(bytes);
+    unsigned char *before = malloc(bytes);
+    size_t i;
+    int pass;
+
+    // a failed bleed only leaves the dark fringe, so the load goes on
+    if (work == NULL || before == NULL) {
+        free(work);
+        free(before);
+        return;
+    }
+    memcpy(work, image->pixels, bytes);
+    for (pass = 0; pass < passes; pass++) {
+        memcpy(before, work, bytes);
+        bleed_pass(work, before, image->width, image->height);
+    }
+    for (i = 0; i < count; i++) {
+        if (image->pixels[i * 4 + 3] == 0) {
+            image->pixels[i * 4] = work[i * 4];
+            image->pixels[i * 4 + 1] = work[i * 4 + 1];
+            image->pixels[i * 4 + 2] = work[i * 4 + 2];
+        }
+    }
+    free(work);
+    free(before);
+}
+
 void image_free(Image *image)
 {
     stbi_image_free(image->pixels);

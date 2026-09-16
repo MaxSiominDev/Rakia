@@ -5,10 +5,11 @@
 #include "engine/gl_compat.h"
 #include "engine/light.h"
 #include "engine/shader.h"
+#include "engine/texture.h"
 #include "engine/vecmath.h"
 
-#define PARTICLES_MAX 1024
-#define PARTICLES_SHEETS 4
+#define PARTICLES_MAX 2048
+#define PARTICLES_SHEETS 5
 
 typedef enum {
     // smoke and fire compose over what is behind them; flashes only add their own light
@@ -70,7 +71,7 @@ typedef struct {
 
 int particles_init(Particles *particles);
 // the frames stitched into one texture; the sheet number to put on a particle, -1 when it cannot be read
-int particles_sheet(Particles *particles, const char *const *frames, int count, int columns);
+int particles_sheet(Particles *particles, const char *const *frames, int count, int columns, TextureKind kind);
 void particles_clear(Particles *particles);
 // a slot to fill in; the particle nearest its end gives way when the pool is full
 Particle *particles_spawn(Particles *particles);

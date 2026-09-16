@@ -83,7 +83,7 @@ static GLuint compile(GLenum type, const char *path)
     return shader;
 }
 
-static GLuint link(GLuint vertex, GLuint fragment, const char *name)
+static GLuint link(GLuint vertex, GLuint fragment, const char *vertex_name, const char *fragment_name)
 {
     GLuint program = glCreateProgram();
     GLint linked = GL_FALSE;
@@ -105,7 +105,7 @@ static GLuint link(GLuint vertex, GLuint fragment, const char *name)
         char log[LOG_CAPACITY];
 
         glGetProgramInfoLog(program, sizeof log, NULL, log);
-        fprintf(stderr, "shaders/%s.vert + shaders/%s.frag: link failed\n%s\n", name, name, log);
+        fprintf(stderr, "shaders/%s.vert + shaders/%s.frag: link failed\n%s\n", vertex_name, fragment_name, log);
         glDeleteProgram(program);
         return 0;
     }
@@ -113,7 +113,7 @@ static GLuint link(GLuint vertex, GLuint fragment, const char *name)
     return program;
 }
 
-int shader_load(Shader *shader, const char *name)
+int shader_load_split(Shader *shader, const char *vertex_name, const char *fragment_name)
 {
     char vertex_path[ASSETS_PATH_MAX];
     char fragment_path[ASSETS_PATH_MAX];
@@ -122,7 +122,7 @@ int shader_load(Shader *shader, const char *name)
     GLuint program;
 
     memset(shader, 0, sizeof *shader);
-    if (source_path(vertex_path, name, "vert") != 0 || source_path(fragment_path, name, "frag") != 0) {
+    if (source_path(vertex_path, vertex_name, "vert") != 0 || source_path(fragment_path, fragment_name, "frag") != 0) {
         return -1;
     }
 
@@ -136,7 +136,7 @@ int shader_load(Shader *shader, const char *name)
         return -1;
     }
 
-    program = link(vertex, fragment, name);
+    program = link(vertex, fragment, vertex_name, fragment_name);
     glDeleteShader(vertex);
     glDeleteShader(fragment);
     if (program == 0) {
@@ -145,6 +145,11 @@ int shader_load(Shader *shader, const char *name)
 
     shader->program = program;
     return 0;
+}
+
+int shader_load(Shader *shader, const char *name)
+{
+    return shader_load_split(shader, name, name);
 }
 
 GLint shader_uniform(Shader *shader, const char *name)

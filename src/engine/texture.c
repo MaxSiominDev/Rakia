@@ -5,6 +5,9 @@
 
 #include <stdio.h>
 
+// reaches past the fringe that mipmaps blend in, without flooding large empty margins
+#define CUTOUT_BLEED_PASSES 6
+
 static GLenum internal_format(int channels, TextureKind kind)
 {
     const int srgb = kind != TEXTURE_DATA;
@@ -66,15 +69,20 @@ static GLuint finish_texture(GLuint id, const char *path, GLenum error)
     return id;
 }
 
-GLuint texture_create(const Image *image, TextureKind kind, const char *name)
+GLuint texture_create(Image *image, TextureKind kind, const char *name)
 {
-    const int screen = kind == TEXTURE_SCREEN;
-    const GLenum wrap = screen || kind == TEXTURE_CUTOUT ? GL_CLAMP_TO_EDGE : GL_REPEAT;
-    const GLenum min_filter = screen ? GL_LINEAR : GL_LINEAR_MIPMAP_LINEAR;
+    // screen textures draw at about one texel per pixel, and sprite sheets stay large for their short life
+    const int no_mips = kind == TEXTURE_SCREEN || kind == TEXTURE_SPRITE;
+    const GLenum wrap = no_mips || kind == TEXTURE_CUTOUT ? GL_CLAMP_TO_EDGE : GL_REPEAT;
+    const GLenum min_filter = no_mips ? GL_LINEAR : GL_LINEAR_MIPMAP_LINEAR;
     GLuint id = new_texture(min_filter, wrap, wrap);
     GLenum error;
 
-    if (!screen && gl_ext_present(GLEXT_TEXTURE_FILTER_ANISOTROPIC)) {
+    // bled before the mipmaps are built, so cutout edges do not blend toward black
+    if (kind == TEXTURE_CUTOUT && image->channels == 4) {
+        image_bleed(image, CUTOUT_BLEED_PASSES);
+    }
+    if (!no_mips && gl_ext_present(GLEXT_TEXTURE_FILTER_ANISOTROPIC)) {
         GLfloat max_anisotropy = 1.0f;
 
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotropy);
@@ -83,7 +91,7 @@ GLuint texture_create(const Image *image, TextureKind kind, const char *name)
     glTexImage2D(GL_TEXTURE_2D, 0, (GLint)internal_format(image->channels, kind), image->width, image->height, 0,
                  pixel_format(image->channels), GL_UNSIGNED_BYTE, image->pixels);
     error = glGetError();
-    if (error == GL_NO_ERROR && !screen) {
+    if (error == GL_NO_ERROR && !no_mips) {
         glGenerateMipmapEXT(GL_TEXTURE_2D);
         error = glGetError();
     }
@@ -112,15 +120,21 @@ GLuint texture_load_hdr(const char *path)
     HdrImage image;
     const char *reason;
     GLuint id;
+    GLenum error;
 
     if (image_load_hdr(&image, path, &reason) != 0) {
         fprintf(stderr, "cannot load panorama %s: %s\n", path, reason);
         return 0;
     }
 
-    id = new_texture(GL_LINEAR, GL_REPEAT, GL_CLAMP_TO_EDGE);
+    id = new_texture(GL_LINEAR_MIPMAP_LINEAR, GL_REPEAT, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, image.width, image.height, 0, GL_RGB, GL_FLOAT, image.pixels);
     image_free_hdr(&image);
+    error = glGetError();
+    if (error == GL_NO_ERROR) {
+        glGenerateMipmapEXT(GL_TEXTURE_2D);
+        error = glGetError();
+    }
 
-    return finish_texture(id, path, glGetError());
+    return finish_texture(id, path, error);
 }

@@ -10,8 +10,8 @@
 // the sun over the hero camera's right shoulder: it lights the jet's left flank and its glow fills the top right
 #define SKY_YAW_DEGREES -13.0f
 #define EXPOSURE 0.5f
-// exp-squared fog: at this distance the haze is about two thirds of the way to the fog color
-#define FOG_DISTANCE 7000.0f
+// exp-squared fog that fully covers the terrain's far edge at TERRAIN_VIEW_DISTANCE
+#define FOG_DISTANCE 6000.0f
 
 // the disk is clipped in the file, so only its color (32.6:20.1:8.8) is measured and its strength chosen by eye;
 // the hemisphere values are the irradiance integrated from the file, the fog color its horizon band
@@ -47,5 +47,4 @@ void light_apply(const Light *light, Shader *shader)
     shader_set_vec3(shader, "u_ground_ambient", light->ground_ambient);
     shader_set_vec3(shader, "u_fog_color", light->fog_color);
     shader_set_float(shader, "u_fog_density", light->fog_density);
-    shader_set_float(shader, "u_exposure", light->exposure);
 }

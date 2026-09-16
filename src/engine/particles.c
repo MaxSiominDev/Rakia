@@ -36,7 +36,7 @@ int particles_init(Particles *particles)
     return 0;
 }
 
-int particles_sheet(Particles *particles, const char *const *frames, int count, int columns)
+int particles_sheet(Particles *particles, const char *const *frames, int count, int columns, TextureKind kind)
 {
     ParticleSheet *sheet;
     Image atlas;
@@ -52,7 +52,7 @@ int particles_sheet(Particles *particles, const char *const *frames, int count, 
     }
 
     sheet = &particles->sheets[particles->sheet_count];
-    sheet->texture = texture_create(&atlas, TEXTURE_CUTOUT, frames[0]);
+    sheet->texture = texture_create(&atlas, kind, frames[0]);
     image_free(&atlas);
     if (sheet->texture == 0) {
         return -1;

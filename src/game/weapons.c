@@ -14,9 +14,11 @@
 #define SEEKER_LIMIT (80.0f * VEC_DEGREES)
 // how close the missile has to pass to count as a hit, on top of the target's own box
 #define MISSILE_REACH 2.0f
+#define EXHAUST_SECONDS 0.025f
+#define TRAIL_SECONDS 0.12f
 // fireball sizes: a destroyed target, a missile burning out in the air, and a ground impact
-#define TARGET_FIRE_MIN 14.0f
-#define TARGET_FIRE_MAX 40.0f
+#define TARGET_FIRE_MIN 50.0f
+#define TARGET_FIRE_MAX 140.0f
 #define BURST_FIRE 7.0f
 #define GROUND_FIRE 9.0f
 #define MARK_SHARE 0.8f
@@ -113,6 +115,8 @@ int weapons_launch(Weapons *weapons, Hangar *hangar, World *world, const Aircraf
     missile->velocity = v3_scale(quat_rotate(aircraft->orientation, v3(0.0f, 0.0f, 1.0f)), aircraft->speed);
     missile->target = target;
     missile->time = 0.0f;
+    missile->exhaust_timer = 0.0f;
+    missile->trail_timer = 0.0f;
     missile->flying = 1;
     // the pylon stays unmounted until a hangar restock fills it again
     hangar->mounted[pylon] = -1;
@@ -172,6 +176,18 @@ void weapons_step(Weapons *weapons, Targets *targets, Effects *effects, float dt
         speed = boosted(v3_length(missile->velocity), missile->time, dt);
         missile->velocity = v3_scale(v3_normalize(missile->velocity), speed);
         missile->position = v3_add(from, v3_scale(missile->velocity, dt));
+
+        missile->exhaust_timer -= dt;
+        missile->trail_timer -= dt;
+        if (missile->time <= BOOST_SECONDS && missile->exhaust_timer <= 0.0f) {
+            effects_exhaust(effects, missile->position, v3_normalize(v3_scale(missile->velocity, -1.0f)), dt);
+            missile->exhaust_timer = EXHAUST_SECONDS;
+        }
+        if (missile->trail_timer <= 0.0f) {
+            effects_trail_puff(effects, missile->position);
+            missile->trail_timer = TRAIL_SECONDS;
+        }
+
         ground = fmaxf(terrain_height(missile->position.x, missile->position.z), TERRAIN_SEA_LEVEL);
 
         hit = targets_hit(targets, from, missile->position, MISSILE_REACH);
