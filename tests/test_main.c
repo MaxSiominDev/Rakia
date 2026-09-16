@@ -55,6 +55,7 @@ void test_particles_main(void);
 void test_effects_main(void);
 void test_targets_main(void);
 void test_weapons_main(void);
+void test_hud_main(void);
 void test_game_main(void);
 
 int main(void)
@@ -86,6 +87,7 @@ int main(void)
     test_effects_main();
     test_targets_main();
     test_weapons_main();
+    test_hud_main();
     test_game_main();
 
     if (failures > 0) {
