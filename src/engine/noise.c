@@ -124,3 +124,10 @@ void noise_warp(float *x, float *y, float frequency, float amount, unsigned int 
     *x += amount * noise2(sx, sy, seed ^ WARP_X_SEED);
     *y += amount * noise2(sx, sy, seed ^ WARP_Y_SEED);
 }
+
+float noise_random(unsigned int *state)
+{
+    *state = *state * 1664525u + 1013904223u;
+
+    return (float)(*state >> 8) * (1.0f / 16777216.0f);
+}

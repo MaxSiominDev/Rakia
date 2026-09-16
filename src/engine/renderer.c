@@ -260,8 +260,8 @@ static void draw_meshes(Renderer *renderer, const Scene *scene, const Camera *ca
     glUseProgram(0);
 }
 
-void renderer_draw(Renderer *renderer, const Scene *scene, const Camera *camera, const Light *light,
-                   float time, int width, int height)
+void renderer_draw(Renderer *renderer, const Scene *scene, Particles *particles, const Camera *camera,
+                   const Light *light, float time, int width, int height)
 {
     const Mat4 view_projection = m4_multiply(camera_projection(camera, width, height), camera_view(camera));
 
@@ -280,4 +280,5 @@ void renderer_draw(Renderer *renderer, const Scene *scene, const Camera *camera,
     water_draw(&renderer->water, view_projection, camera, light, time);
     // blended groups come last so they compose over the sea and the plants behind them
     draw_meshes(renderer, scene, camera, light, view_projection, 1);
+    particles_draw(particles, view_projection, camera, light);
 }

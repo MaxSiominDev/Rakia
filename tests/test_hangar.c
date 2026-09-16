@@ -228,6 +228,65 @@ static void test_pass_through(void)
     check_close(world.props[2].entity->position.x, 3.5f, 1e-5f, "and through the one already hanging there");
 }
 
+static void test_takeoff_snapshot(void)
+{
+    apron();
+    drag_to(1, 12.0f, 0.0f, 3.0f, -2.0f);
+    hangar_takeoff(&hangar);
+    check(hangar.takeoff[0] == 1, "the snapshot remembers which prop rode which pylon");
+    check(hangar.takeoff[1] == -1, "and which pylons were empty");
+}
+
+static void test_restock_pylons(void)
+{
+    apron();
+    drag_to(1, 12.0f, 0.0f, 3.0f, -2.0f);
+    hangar_takeoff(&hangar);
+
+    // the missile fires: the pylon empties and the entity is hidden wherever it resolved
+    hangar.mounted[0] = -1;
+    world.props[1].entity->hidden = 1;
+    world.props[1].entity->position = v3(500.0f, 0.0f, 900.0f);
+
+    hangar_restock_pylons(&hangar, &world);
+    check(hangar.mounted[0] == 1, "a missile fired at takeoff returns to the pylon it flew from");
+    check(!world.props[1].entity->hidden, "and comes back into view");
+}
+
+static void test_restock_cart(void)
+{
+    apron();
+    drag_to(1, 12.0f, 0.0f, 3.0f, -2.0f);
+    drag_to(2, 12.0f, 6.0f, 20.0f, 10.0f);
+    hangar_takeoff(&hangar);
+    check(hangar.takeoff[0] == 1, "the mounted missile is remembered");
+
+    hangar.mounted[0] = -1;
+    world.props[1].entity->hidden = 1;
+    world.props[1].entity->position = v3(500.0f, 0.0f, 900.0f);
+    world.props[1].home = v3(12.0f, 0.92f, 0.0f);
+
+    hangar_restock_cart(&hangar, &world);
+    check(hangar.mounted[0] == -1, "a restocked missile does not remount itself");
+    check(!world.props[1].entity->hidden, "it comes back into view");
+    check_v3(world.props[1].entity->position, 12.0f, 0.92f, 0.0f, "right back in its own cart slot");
+    check_v3(world.props[2].entity->position, 20.0f, MISSILE_REST, 10.0f,
+             "a missile never mounted this sortie is left where the player put it");
+}
+
+static void test_restock_skips_mounted(void)
+{
+    apron();
+    drag_to(1, 12.0f, 0.0f, 3.0f, -2.0f);
+    hangar_takeoff(&hangar);
+
+    hangar_restock_cart(&hangar, &world);
+    check(hangar.mounted[0] == 1, "a missile still on its pylon is untouched by a cart restock");
+
+    hangar_restock_pylons(&hangar, &world);
+    check(hangar.mounted[0] == 1, "or by a pylon restock");
+}
+
 void test_hangar_main(void)
 {
     test_hover_and_grab();
@@ -238,4 +297,8 @@ void test_hangar_main(void)
     test_high_pylon();
     test_cart();
     test_pass_through();
+    test_takeoff_snapshot();
+    test_restock_pylons();
+    test_restock_cart();
+    test_restock_skips_mounted();
 }

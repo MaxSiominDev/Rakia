@@ -6,6 +6,7 @@
 #include "engine/light.h"
 #include "engine/material.h"
 #include "engine/mesh.h"
+#include "engine/particles.h"
 #include "engine/scene.h"
 #include "engine/shader.h"
 #include "engine/shadow.h"
@@ -31,8 +32,8 @@ typedef struct {
 } Renderer;
 
 int renderer_init(Renderer *renderer, const char *panorama_path);
-// time in seconds since the start; only the sea moves with it
-void renderer_draw(Renderer *renderer, const Scene *scene, const Camera *camera, const Light *light,
-                   float time, int width, int height);
+// time in seconds since the start; only the sea moves with it. particles draws last, over everything else
+void renderer_draw(Renderer *renderer, const Scene *scene, Particles *particles, const Camera *camera,
+                   const Light *light, float time, int width, int height);
 
 #endif

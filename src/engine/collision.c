@@ -66,3 +66,18 @@ int collision_push(const Footprint *a, const Footprint *b, Vec3 *push)
 
     return 1;
 }
+
+int collision_segment(const Hitbox *box, Vec3 from, Vec3 to, float radius)
+{
+    const Vec3 sweep = v3(radius, radius, radius);
+    const Mat4 model = m4_multiply(m4_translate(box->position),
+                                   quat_to_mat4(quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), box->yaw)));
+    Ray path;
+    float reach;
+
+    // left unnormalized, so reach lands in [0, 1] across exactly this one step's motion
+    path.origin = from;
+    path.direction = v3_sub(to, from);
+
+    return picking_box(path, model, v3_sub(box->min, sweep), v3_add(box->max, sweep), &reach) && reach <= 1.0f;
+}

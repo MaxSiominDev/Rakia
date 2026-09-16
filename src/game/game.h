@@ -4,12 +4,16 @@
 #include "engine/camera.h"
 #include "engine/input.h"
 #include "engine/light.h"
+#include "engine/particles.h"
 #include "engine/renderer.h"
 #include "engine/scene.h"
 #include "engine/text.h"
 #include "game/aircraft.h"
+#include "game/effects.h"
 #include "game/hangar.h"
 #include "game/takeoff.h"
+#include "game/targets.h"
+#include "game/weapons.h"
 #include "game/world.h"
 
 typedef enum {
@@ -36,6 +40,10 @@ typedef struct {
     World world;
     Hangar hangar;
     Takeoff takeoff;
+    Particles particles;
+    Effects effects;
+    Targets targets;
+    Weapons weapons;
     int cockpit_view;
     int inverted_pitch;
     // seconds left on the note about the pitch keys, and on the wreck before the hangar opens again
@@ -49,6 +57,13 @@ typedef struct {
     // the keys held one step ago, so a press can be told from a hold
     Input previous;
     float time;
+    // the target Tab has picked, -1 for the automatic nearest-live one
+    int designated;
+    // counts up on every hangar entry, which is what changes the target layout's seed
+    unsigned int mission;
+    // world clock reading when the flight took over from the takeoff script, for the mission timer
+    float mission_start;
+    float mission_time;
 } Game;
 
 // the platform hands the context back as a void pointer, hence the signatures

@@ -2,6 +2,7 @@
 #define TEXTURE_H
 
 #include "engine/gl_compat.h"
+#include "engine/image.h"
 
 // color textures are stored as sRGB so the shader samples linear values; data maps stay linear
 typedef enum {
@@ -14,6 +15,8 @@ typedef enum {
 } TextureKind;
 
 GLuint texture_load(const char *path, TextureKind kind);
+// an image already in memory, such as an atlas stitched at load time; name only names it in the error
+GLuint texture_create(const Image *image, TextureKind kind, const char *name);
 // float rgb, no mipmaps, wrapping horizontally the way an equirect panorama needs
 GLuint texture_load_hdr(const char *path);
 

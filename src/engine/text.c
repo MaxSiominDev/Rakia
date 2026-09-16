@@ -5,6 +5,7 @@
 #include "engine/material.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -108,13 +109,12 @@ float font_width(const Font *font, const char *string)
     return width;
 }
 
-// wound so a quad still faces the front once the projection flips y
-static const float quad_corners[6][2] = {{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f},
-                                         {0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}};
+// the corners of a quad, and the winding that still faces the front once the projection flips y
+static const float corner_uvs[4][2] = {{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}};
+static const int corner_order[6] = {0, 1, 2, 0, 2, 3};
 
-// the source rectangle is in atlas pixels, from the top left corner of the atlas
-static void push_quad(Text *text, float x, float y, float width, float height,
-                      float sx, float sy, float swidth, float sheight)
+// the corners run around the quad and the source rectangle is in atlas pixels, from its top left corner
+static void push_corners(Text *text, const float corners[4][2], float sx, float sy, float swidth, float sheight)
 {
     const float to_u = 1.0f / (float)text->font.atlas_width;
     const float to_v = 1.0f / (float)text->font.atlas_height;
@@ -126,14 +126,29 @@ static void push_quad(Text *text, float x, float y, float width, float height,
     }
     vertex = &text->vertices[text->vertex_count];
     for (i = 0; i < 6; i++) {
-        vertex[i].x = x + width * quad_corners[i][0];
-        vertex[i].y = y + height * quad_corners[i][1];
-        vertex[i].u = (sx + swidth * quad_corners[i][0]) * to_u;
+        const int corner = corner_order[i];
+
+        vertex[i].x = corners[corner][0];
+        vertex[i].y = corners[corner][1];
+        vertex[i].u = (sx + swidth * corner_uvs[corner][0]) * to_u;
         // image.c flips the png as it loads, so the top row of the atlas is the last row of the texture
-        vertex[i].v = 1.0f - (sy + sheight * quad_corners[i][1]) * to_v;
+        vertex[i].v = 1.0f - (sy + sheight * corner_uvs[corner][1]) * to_v;
     }
     text->vertex_count += 6;
     text->runs[text->run_count - 1].count += 6;
+}
+
+static void push_quad(Text *text, float x, float y, float width, float height,
+                      float sx, float sy, float swidth, float sheight)
+{
+    const float corners[4][2] = {{x, y}, {x, y + height}, {x + width, y + height}, {x + width, y}};
+
+    push_corners(text, corners, sx, sy, swidth, sheight);
+}
+
+static void push_solid(Text *text, const float corners[4][2])
+{
+    push_corners(text, corners, (float)text->font.solid_x + 0.5f, (float)text->font.solid_y + 0.5f, 0.0f, 0.0f);
 }
 
 void text_begin(Text *text, int width, int height)
@@ -185,8 +200,23 @@ void text_string(Text *text, float x, float y, float scale, const char *string)
 
 void text_quad(Text *text, float x, float y, float width, float height)
 {
-    push_quad(text, x, y, width, height, (float)text->font.solid_x + 0.5f, (float)text->font.solid_y + 0.5f,
-              0.0f, 0.0f);
+    const float corners[4][2] = {{x, y}, {x, y + height}, {x + width, y + height}, {x + width, y}};
+
+    push_solid(text, corners);
+}
+
+void text_line(Text *text, float x0, float y0, float x1, float y1, float thickness)
+{
+    const float dx = x1 - x0;
+    const float dy = y1 - y0;
+    const float length = sqrtf(dx * dx + dy * dy);
+    // half the thickness across the line, so the bar is centered on it
+    const float across_x = length > 0.0f ? -dy / length * thickness * 0.5f : 0.0f;
+    const float across_y = length > 0.0f ? dx / length * thickness * 0.5f : 0.0f;
+    const float corners[4][2] = {{x0 - across_x, y0 - across_y}, {x0 + across_x, y0 + across_y},
+                                 {x1 + across_x, y1 + across_y}, {x1 - across_x, y1 - across_y}};
+
+    push_solid(text, corners);
 }
 
 void text_end(Text *text)

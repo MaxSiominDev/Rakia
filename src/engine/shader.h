@@ -8,8 +8,9 @@
 #define SHADER_ATTRIBUTE_NORMAL 1
 #define SHADER_ATTRIBUTE_UV 2
 #define SHADER_ATTRIBUTE_TANGENT 3
-// billboards use this in place of the normal, uv and tangent slots
+// billboards use this in place of the normal and tangent slots, and particles a color of their own
 #define SHADER_ATTRIBUTE_CORNER 4
+#define SHADER_ATTRIBUTE_COLOR 5
 
 #define SHADER_UNIFORM_CACHE 32
 #define SHADER_UNIFORM_NAME_LENGTH 32

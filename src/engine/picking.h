@@ -16,5 +16,8 @@ Ray picking_ray(Mat4 view_projection, float x, float y, float width, float heigh
 int picking_box(Ray ray, Mat4 model, Vec3 min, Vec3 max, float *distance);
 // the horizontal plane at that height; misses when the ray runs away from it or along it
 int picking_ground(Ray ray, float height, Vec3 *hit);
+// where a world point lands on the screen, in the point coordinates picking_ray takes; 0 when it is behind
+// the eye and nothing is written
+int picking_screen(Mat4 view_projection, Vec3 point, float width, float height, float *x, float *y);
 
 #endif

@@ -73,6 +73,8 @@ void text_color(Text *text, Vec3 color);
 // x, y is the top left corner of the line box, which reaches down to y + line_height * scale
 void text_string(Text *text, float x, float y, float scale, const char *string);
 void text_quad(Text *text, float x, float y, float width, float height);
+// a bar of that thickness centered on the line between the two points, for the marks a HUD draws at an angle
+void text_line(Text *text, float x0, float y0, float x1, float y1, float thickness);
 void text_end(Text *text);
 
 #endif

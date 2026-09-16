@@ -86,3 +86,16 @@ int picking_ground(Ray ray, float height, Vec3 *hit)
 
     return 1;
 }
+
+int picking_screen(Mat4 view_projection, Vec3 point, float width, float height, float *x, float *y)
+{
+    const Vec4 clip = m4_transform(view_projection, v4(point.x, point.y, point.z, 1.0f));
+
+    if (clip.w <= 0.0f) {
+        return 0;
+    }
+    *x = (0.5f + 0.5f * clip.x / clip.w) * width;
+    *y = (0.5f - 0.5f * clip.y / clip.w) * height;
+
+    return 1;
+}
