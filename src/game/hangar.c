@@ -194,6 +194,7 @@ void hangar_init(Hangar *hangar)
     hangar->held = 0;
     for (i = 0; i < WORLD_PYLONS; i++) {
         hangar->mounted[i] = -1;
+        hangar->takeoff[i] = -1;
     }
 }
 
@@ -205,6 +206,15 @@ void hangar_release(Hangar *hangar, World *world)
     hangar->hovered = -1;
     hangar->held = 0;
     untint(world);
+}
+
+void hangar_takeoff(Hangar *hangar)
+{
+    int i;
+
+    for (i = 0; i < WORLD_PYLONS; i++) {
+        hangar->takeoff[i] = hangar->mounted[i];
+    }
 }
 
 void hangar_step(Hangar *hangar, World *world, Ray ray, int button)
@@ -257,4 +267,37 @@ int hangar_missiles(const Hangar *hangar)
     }
 
     return count;
+}
+
+// a pylon that took off loaded and now has nothing mounted fired its missile away this sortie
+static int fired_since_takeoff(const Hangar *hangar, int pylon)
+{
+    return hangar->takeoff[pylon] >= 0 && hangar->mounted[pylon] < 0;
+}
+
+void hangar_restock_pylons(Hangar *hangar, World *world)
+{
+    int i;
+
+    for (i = 0; i < WORLD_PYLONS; i++) {
+        if (fired_since_takeoff(hangar, i)) {
+            hangar->mounted[i] = hangar->takeoff[i];
+            world->props[hangar->takeoff[i]].entity->hidden = 0;
+        }
+    }
+}
+
+void hangar_restock_cart(Hangar *hangar, World *world)
+{
+    int i;
+
+    for (i = 0; i < WORLD_PYLONS; i++) {
+        if (fired_since_takeoff(hangar, i)) {
+            Prop *prop = &world->props[hangar->takeoff[i]];
+
+            prop->entity->position = prop->home;
+            prop->entity->orientation = quat_from_axis_angle(v3(0.0f, 1.0f, 0.0f), prop->yaw);
+            prop->entity->hidden = 0;
+        }
+    }
 }

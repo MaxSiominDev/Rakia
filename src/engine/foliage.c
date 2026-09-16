@@ -3,6 +3,7 @@
 #include "engine/assets.h"
 #include "engine/gl_ext.h"
 #include "engine/material.h"
+#include "engine/noise.h"
 #include "engine/terrain.h"
 
 #include <math.h>
@@ -64,13 +65,6 @@ static unsigned int plant_hash(int ix, int iz, int index)
     return h;
 }
 
-static float next_unit(unsigned int *state)
-{
-    *state = *state * 1664525u + 1013904223u;
-
-    return (float)(*state >> 8) * (1.0f / 16777216.0f);
-}
-
 int foliage_place(int ix, int iz, FoliagePlant *plants, int max)
 {
     const float origin_x = (float)ix * FOLIAGE_CELL;
@@ -80,11 +74,11 @@ int foliage_place(int ix, int iz, FoliagePlant *plants, int max)
 
     for (i = 0; i < CANDIDATES && count < max; i++) {
         unsigned int state = plant_hash(ix, iz, i);
-        const float x = origin_x + FOLIAGE_CELL * next_unit(&state);
-        const float z = origin_z + FOLIAGE_CELL * next_unit(&state);
-        const int kind = (int)(next_unit(&state) * FOLIAGE_KINDS);
-        const float roll = next_unit(&state);
-        const float scale = 0.75f + 0.6f * next_unit(&state);
+        const float x = origin_x + FOLIAGE_CELL * noise_random(&state);
+        const float z = origin_z + FOLIAGE_CELL * noise_random(&state);
+        const int kind = (int)(noise_random(&state) * FOLIAGE_KINDS);
+        const float roll = noise_random(&state);
+        const float scale = 0.75f + 0.6f * noise_random(&state);
         TerrainPoint point;
 
         if (terrain_on_base(x, z)) {

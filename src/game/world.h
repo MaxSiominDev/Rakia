@@ -9,8 +9,9 @@
 
 #define WORLD_PYLONS 4
 #define WORLD_MAX_PROPS 16
-#define WORLD_MAX_MESHES 16
-#define WORLD_MAX_MATERIALS 24
+// the airbase and the targets share these pools
+#define WORLD_MAX_MESHES 24
+#define WORLD_MAX_MATERIALS 56
 
 // the airbase in metres: the runway runs along +z with its centerline at x = 0, the apron lies west of its
 // southern half, and the jet parks there facing north
@@ -48,6 +49,8 @@ typedef struct {
     float yaw;
     // the height its origin sits at when it stands on the apron
     float rest;
+    // where a missile prop restocks to; meaningless for every other kind
+    Vec3 home;
     PropKind kind;
 } Prop;
 
@@ -80,6 +83,8 @@ typedef struct {
 } World;
 
 int world_init(World *world, Scene *scene, Aircraft *aircraft);
+// one model into the world's pools; the parsed data goes as soon as the mesh is uploaded
+int world_load(World *world, const char *relative, Mesh **mesh, Material **materials);
 // the jet back on its spot, standing still
 void world_park(World *world, Aircraft *aircraft);
 // 0 leaves the canopy wide open, 1 shuts it

@@ -15,15 +15,23 @@ typedef struct {
     int held;
     // the missile hanging on each pylon, -1 while the pylon is free
     int mounted[WORLD_PYLONS];
+    // the loadout the jet left the hangar with, so a return can tell which pylons were fired empty
+    int takeoff[WORLD_PYLONS];
 } Hangar;
 
 void hangar_init(Hangar *hangar);
 // the cursor lets go of everything and every tint goes out, which is what leaving the hangar does
 void hangar_release(Hangar *hangar, World *world);
+// remembers the loadout a takeoff leaves with, for a later restock to compare against
+void hangar_takeoff(Hangar *hangar);
 // one step of the cursor: the ray under it and whether the left button is held
 void hangar_step(Hangar *hangar, World *world, Ray ray, int button);
 // the mounted missiles ride their pylons wherever the jet goes
 void hangar_carry(const Hangar *hangar, World *world);
 int hangar_missiles(const Hangar *hangar);
+// a missile fired since the takeoff snapshot returns to its own pylon; one still mounted is left alone
+void hangar_restock_pylons(Hangar *hangar, World *world);
+// a missile fired since the takeoff snapshot returns to its own cart slot; one still mounted is left alone
+void hangar_restock_cart(Hangar *hangar, World *world);
 
 #endif

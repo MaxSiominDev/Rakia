@@ -8,6 +8,7 @@
 
 #define KEY_ESCAPE 27
 #define KEY_ENTER 13
+#define KEY_SPACE 32
 
 // the F-16 at its scale, which is all the ground contact needs from the model
 #define JET_MIN v3(-4.7f, 0.0f, -7.5f)
@@ -45,6 +46,8 @@ static void tap(unsigned char key)
 // the world without its models: the jet and everything bolted to it, which is all the game itself moves
 static void fresh(void)
 {
+    int i;
+
     memset(&game, 0, sizeof game);
     memset(&shell, 0, sizeof shell);
     memset(&group, 0, sizeof group);
@@ -63,6 +66,14 @@ static void fresh(void)
     game.world.props[0].kind = PROP_MISSILE;
     game.world.prop_count = 1;
     hangar_init(&game.hangar);
+    // open_hangar resets the effects and the target layout on every return, crash included
+    game.effects.particles = &game.particles;
+    for (i = 0; i < EFFECTS_MARKS; i++) {
+        game.effects.marks[i] = scene_add(&game.scene, &shell, NULL);
+    }
+    // live targets, or a fresh flight would read as already complete
+    targets_place(&game.targets, 1u);
+    game.designated = -1;
 }
 
 static void place(Vec3 position, float climb_degrees)
@@ -315,6 +326,280 @@ static void test_throttle_and_inversion(void)
     check_close(climb_sine(), -climbing, 1e-3f, "and then the same key dives by the same amount");
 }
 
+// takeoff into a lock, a launch, a hit, and mission complete with a fresh layout on the way back
+static void test_mission_flow(void)
+{
+    Input input;
+    Vec3 ahead;
+    Vec3 old_layout;
+    Vec3 home = v3(42.0f, 1.0f, -7.0f);
+    int step;
+    int i;
+
+    hands_off(&input);
+    on_apron();
+    game.hangar.mounted[0] = 0;
+    game.world.props[0].home = home;
+    tap(KEY_ENTER);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_FLIGHT, "the takeoff hands over into flight");
+
+    // a target dead ahead of wherever the climb-out left the nose pointing, close enough to lock at once
+    ahead = v3_add(game.aircraft.position,
+                   v3_scale(quat_rotate(game.aircraft.orientation, v3(0.0f, 0.0f, 1.0f)), 1200.0f));
+    game.targets.list[0].position = ahead;
+    game.targets.list[0].yaw = 0.0f;
+    game.targets.list[0].min = v3(-6.0f, -6.0f, -6.0f);
+    game.targets.list[0].max = v3(6.0f, 6.0f, 6.0f);
+    game.targets.list[0].alive = 1;
+
+    steps(&input, 1);
+    check(game.designated == 0, "the nearest live target is designated by default");
+    check(weapons_locked(&game.targets, &game.aircraft, game.designated) == 0, "and it locks dead ahead and close");
+
+    tap(KEY_SPACE);
+    check(game.weapons.launched == 1, "space launches a missile at the locked target");
+    check(hangar_missiles(&game.hangar) == 0, "which empties the pylon this fixture loaded");
+
+    for (step = 0; step < (int)(WEAPONS_LIFETIME * TIMESTEP_HZ) && game.weapons.hits == 0; step++) {
+        steps(&input, 1);
+    }
+    check(game.weapons.hits == 1, "the guided missile reaches the stationary target inside its lifetime");
+    check(!game.targets.list[0].alive, "and the target is destroyed");
+
+    // the other four go down some other way; the state machine only cares that none are left alive
+    for (i = 1; i < TARGETS_COUNT; i++) {
+        targets_destroy(&game.targets, i);
+    }
+    old_layout = game.targets.list[0].position;
+    steps(&input, 1);
+    check(game.state == GAME_COMPLETE, "the fifth kill ends the mission");
+    check(game.weapons.launched == 1 && game.weapons.hits == 1, "the summary carries the mission's own tally");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "enter returns to the hangar");
+    check(targets_alive(&game.targets) == TARGETS_COUNT, "with every target alive again");
+    check(v3_length(v3_sub(game.targets.list[0].position, old_layout)) > 1.0f, "standing somewhere new");
+    check_v3(game.world.props[0].entity->position, home.x, home.y, home.z,
+             "the missile that won the mission is restocked to its own cart slot");
+    check(!game.world.props[0].entity->hidden, "in plain view again");
+    check(game.hangar.mounted[0] == -1, "not remounted on a pylon");
+}
+
+// the offer only opens the hangar once the jet has nothing mounted and nothing left flying
+static void test_offer_gates_enter(void)
+{
+    airborne();
+    game.hangar.mounted[0] = 0;
+    tap(KEY_ENTER);
+    check(game.state == GAME_FLIGHT, "enter does nothing while a missile is still mounted");
+
+    game.hangar.mounted[0] = -1;
+    game.weapons.shots[0].entity = game.world.props[0].entity;
+    game.weapons.shots[0].position = game.aircraft.position;
+    game.weapons.shots[0].velocity = v3(0.0f, 0.0f, 250.0f);
+    game.weapons.shots[0].target = -1;
+    game.weapons.shots[0].time = 0.0f;
+    game.weapons.shots[0].flying = 1;
+    tap(KEY_ENTER);
+    check(game.state == GAME_FLIGHT, "or while a fired one is still in the air");
+
+    game.weapons.shots[0].flying = 0;
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "only once the jet carries nothing and nothing is left flying");
+}
+
+// pressing enter on the same step the last missile kills the last target must not block mission complete
+static void test_same_frame_kill(void)
+{
+    Input input;
+    int i;
+
+    airborne();
+    for (i = 1; i < TARGETS_COUNT; i++) {
+        targets_destroy(&game.targets, i);
+    }
+    game.targets.list[0].position = v3(0.0f, 600.0f, 100.0f);
+    game.targets.list[0].yaw = 0.0f;
+    game.targets.list[0].min = v3(-6.0f, -6.0f, -6.0f);
+    game.targets.list[0].max = v3(6.0f, 6.0f, 6.0f);
+    game.targets.list[0].alive = 1;
+    game.hangar.mounted[0] = -1;
+
+    // settle enter as not-held first, so the shot is armed and the key goes down on the very same step
+    hands_off(&input);
+    steps(&input, 1);
+    game.weapons.shots[0].entity = game.world.props[0].entity;
+    game.weapons.shots[0].position = v3(0.0f, 600.0f, 97.0f);
+    game.weapons.shots[0].velocity = v3(0.0f, 0.0f, 300.0f);
+    game.weapons.shots[0].target = -1;
+    game.weapons.shots[0].time = 0.0f;
+    game.weapons.shots[0].flying = 1;
+    input_key(&input, KEY_ENTER, 1);
+    steps(&input, 1);
+
+    check(!game.targets.list[0].alive, "the missile steps into the last target on this exact step");
+    check(game.state == GAME_COMPLETE, "and the mission wins, even though enter was pressed the same step");
+}
+
+static void test_bare_takeoff(void)
+{
+    Input input;
+    int step;
+
+    hands_off(&input);
+    on_apron();
+    tap(KEY_ENTER);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_FLIGHT, "the takeoff still hands over with nothing mounted");
+    check(hangar_missiles(&game.hangar) == 0, "and nothing rode along");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "so the offer already stands on the first flight");
+}
+
+// a sortie that empties the jet without finishing the mission: the offer, the restock, and what carries over
+static void test_rearm(void)
+{
+    Input input;
+    Vec3 home = v3(42.0f, 1.0f, -7.0f);
+    Vec3 target_position;
+    int step;
+
+    hands_off(&input);
+    on_apron();
+    game.hangar.mounted[0] = 0;
+    game.world.props[0].home = home;
+    tap(KEY_ENTER);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_FLIGHT, "the takeoff hands over into flight");
+    check(game.hangar.takeoff[0] == 0, "the loadout it left with is remembered");
+
+    targets_destroy(&game.targets, 1);
+    target_position = game.targets.list[2].position;
+
+    tap(KEY_SPACE);
+    check(game.weapons.launched == 1, "space fires the only missile");
+    for (step = 0; step < (int)(WEAPONS_LIFETIME * TIMESTEP_HZ) + 6 && game.weapons.shots[0].flying; step++) {
+        steps(&input, 1);
+    }
+    check(!game.weapons.shots[0].flying, "the shot resolves inside its lifetime");
+    check(hangar_missiles(&game.hangar) == 0 && weapons_flying(&game.weapons) == 0, "the jet is now empty");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "enter on the offer returns to the hangar at once");
+    check_v3(game.world.props[0].entity->position, home.x, home.y, home.z,
+             "the fired missile comes back to its own cart slot");
+    check(!game.world.props[0].entity->hidden, "in plain view again");
+    check(game.hangar.mounted[0] == -1, "not remounted on the pylon");
+    check(game.weapons.launched == 1, "the launch tally carries over, not reset");
+    check(!game.targets.list[1].alive, "a target destroyed earlier in the sortie stays destroyed");
+    check_v3(game.targets.list[2].position, target_position.x, target_position.y, target_position.z,
+             "and a live one stands exactly where it was left");
+    check(game.mission_time > 0.0f, "the sortie's flight time is banked");
+}
+
+// destroying the fifth target on a second sortie still ends the mission, with both sorties in the tally
+static void test_two_sorties(void)
+{
+    Input input;
+    Vec3 ahead;
+    float first_sortie_time;
+    int step;
+    int i;
+
+    hands_off(&input);
+    on_apron();
+    game.hangar.mounted[0] = 0;
+    tap(KEY_ENTER);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+
+    // the only missile goes up unguided and empties the jet without touching a target
+    tap(KEY_SPACE);
+    for (step = 0; step < (int)(WEAPONS_LIFETIME * TIMESTEP_HZ) + 6 && game.weapons.shots[0].flying; step++) {
+        steps(&input, 1);
+    }
+    check(hangar_missiles(&game.hangar) == 0 && weapons_flying(&game.weapons) == 0, "the jet is empty");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "the offer sends it back for a second sortie");
+    check(game.weapons.launched == 1, "the tally remembers the first sortie's shot");
+    first_sortie_time = game.mission_time;
+    check(first_sortie_time > 0.0f, "and the first sortie's flight time is already banked");
+
+    game.hangar.mounted[0] = 0;
+    tap(KEY_ENTER);
+    for (step = 0; step < 40 * TIMESTEP_HZ && game.state == GAME_TAKEOFF; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_FLIGHT, "the second takeoff hands over the same way");
+
+    ahead = v3_add(game.aircraft.position,
+                   v3_scale(quat_rotate(game.aircraft.orientation, v3(0.0f, 0.0f, 1.0f)), 1200.0f));
+    game.targets.list[0].position = ahead;
+    game.targets.list[0].yaw = 0.0f;
+    game.targets.list[0].min = v3(-6.0f, -6.0f, -6.0f);
+    game.targets.list[0].max = v3(6.0f, 6.0f, 6.0f);
+    game.targets.list[0].alive = 1;
+    for (i = 1; i < TARGETS_COUNT; i++) {
+        targets_destroy(&game.targets, i);
+    }
+
+    steps(&input, 1);
+    check(game.designated == 0, "the nearest live target is designated by default");
+    tap(KEY_SPACE);
+    check(game.weapons.launched == 2, "the second sortie's shot adds to the same tally");
+
+    for (step = 0; step < (int)(WEAPONS_LIFETIME * TIMESTEP_HZ) && game.weapons.hits == 0; step++) {
+        steps(&input, 1);
+    }
+    check(game.state == GAME_COMPLETE, "the fifth kill ends the mission on the second sortie");
+    check(game.weapons.launched == 2 && game.weapons.hits == 1, "the summary covers both sorties");
+    check(game.mission_time > first_sortie_time, "and the timer adds the second sortie's flight time to the first's");
+}
+
+// a second sortie's own takeoff snapshot is what a crash restores, not an earlier sortie's
+static void test_crash_after_rearm(void)
+{
+    Input input;
+
+    hands_off(&input);
+    on_apron();
+    game.hangar.mounted[0] = 0;
+    tap(KEY_ENTER);
+    check(game.state == GAME_TAKEOFF, "the first sortie takes off with a missile mounted");
+
+    place(v3(0.0f, 600.0f, 0.0f), 0.0f);
+    camera_chase_settle(&game.chase, game.aircraft.orientation);
+    weapons_launch(&game.weapons, &game.hangar, &game.world, &game.aircraft, -1);
+    game.weapons.shots[0].flying = 0;
+    check(game.weapons.launched == 1, "the sortie fires its only missile");
+
+    tap(KEY_ENTER);
+    check(game.state == GAME_HANGAR, "it rearms once nothing is mounted or flying");
+    check(game.hangar.mounted[0] == -1, "back in the cart, not on a pylon");
+
+    // the second sortie takes off with nothing mounted at all
+    tap(KEY_ENTER);
+    check(game.state == GAME_TAKEOFF, "the second sortie takes off empty");
+
+    game.state = GAME_CRASH;
+    game.crash_wait = 0.0f;
+    steps(&input, 1);
+    check(game.state == GAME_HANGAR, "the crash returns to the hangar");
+    check(game.hangar.mounted[0] == -1, "with the second, empty sortie's own loadout, not the first sortie's");
+    check(targets_alive(&game.targets) == TARGETS_COUNT, "a fresh target layout for the new mission");
+    check(game.weapons.launched == 0, "and the counters reset, even though the first sortie had fired");
+}
+
 void test_game_main(void)
 {
     test_hangar();
@@ -327,4 +612,11 @@ void test_game_main(void)
     test_pause_views();
     test_cockpit_view();
     test_throttle_and_inversion();
+    test_mission_flow();
+    test_offer_gates_enter();
+    test_same_frame_kill();
+    test_bare_takeoff();
+    test_rearm();
+    test_two_sorties();
+    test_crash_after_rearm();
 }

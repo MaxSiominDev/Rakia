@@ -95,6 +95,7 @@ static GLuint link(GLuint vertex, GLuint fragment, const char *name)
     glBindAttribLocation(program, SHADER_ATTRIBUTE_UV, "a_uv");
     glBindAttribLocation(program, SHADER_ATTRIBUTE_TANGENT, "a_tangent");
     glBindAttribLocation(program, SHADER_ATTRIBUTE_CORNER, "a_corner");
+    glBindAttribLocation(program, SHADER_ATTRIBUTE_COLOR, "a_color");
     glLinkProgram(program);
     glDetachShader(program, vertex);
     glDetachShader(program, fragment);

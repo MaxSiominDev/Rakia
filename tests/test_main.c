@@ -50,6 +50,9 @@ void test_text_main(void);
 void test_aircraft_main(void);
 void test_takeoff_main(void);
 void test_hangar_main(void);
+void test_particles_main(void);
+void test_targets_main(void);
+void test_weapons_main(void);
 void test_game_main(void);
 
 int main(void)
@@ -76,6 +79,9 @@ int main(void)
     test_aircraft_main();
     test_takeoff_main();
     test_hangar_main();
+    test_particles_main();
+    test_targets_main();
+    test_weapons_main();
     test_game_main();
 
     if (failures > 0) {

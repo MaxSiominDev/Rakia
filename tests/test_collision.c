@@ -95,10 +95,34 @@ static void test_apron(void)
     check(collision_push(&moved, &jet, &push) == 0, "one move is enough to leave it clear");
 }
 
+static void test_segment(void)
+{
+    Hitbox box;
+
+    box.position = v3(0.0f, 0.0f, 100.0f);
+    box.yaw = 0.0f;
+    box.min = v3(-5.0f, -5.0f, -5.0f);
+    box.max = v3(5.0f, 5.0f, 5.0f);
+
+    check(collision_segment(&box, v3(0.0f, 0.0f, 0.0f), v3(0.0f, 0.0f, 200.0f), 0.5f) == 1,
+          "a path straight through the box crosses it");
+    check(collision_segment(&box, v3(50.0f, 0.0f, 0.0f), v3(50.0f, 0.0f, 200.0f), 0.5f) == 0,
+          "a path well clear of the box misses it");
+    check(collision_segment(&box, v3(0.0f, 0.0f, 300.0f), v3(0.0f, 0.0f, 400.0f), 0.5f) == 0,
+          "a path that never reaches the box's distance misses too");
+    check(collision_segment(&box, v3(0.0f, 0.0f, 100.0f), v3(0.0f, 0.0f, 100.0f), 0.5f) == 1,
+          "a point already inside the box counts as a hit");
+    check(collision_segment(&box, v3(7.5f, 0.0f, 0.0f), v3(7.5f, 0.0f, 200.0f), 3.0f) == 1,
+          "the sweep radius reaches a few metres past the box's own face");
+    check(collision_segment(&box, v3(7.5f, 0.0f, 0.0f), v3(7.5f, 0.0f, 200.0f), 1.0f) == 0,
+          "but not without that extra reach");
+}
+
 void test_collision_main(void)
 {
     test_footprint();
     test_push();
     test_turned();
     test_apron();
+    test_segment();
 }

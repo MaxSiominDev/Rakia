@@ -1,5 +1,6 @@
 #include "game/hud.h"
 
+#include <math.h>
 #include <stdio.h>
 
 // the layout is written in points of a 720 point tall frame and scales with the window, so it reads the same
@@ -15,6 +16,14 @@
 #define MARKER_ARM 18.0f
 #define MARKER_GAP 6.0f
 #define MARKER_WEIGHT 2.0f
+// the box around a lock and the chevron that points at the designated target
+#define LOCK_WEIGHT 2.0f
+#define ARROW_RADIUS 100.0f
+#define ARROW_LENGTH 16.0f
+#define ARROW_SPREAD 9.0f
+#define ARROW_WEIGHT 2.0f
+#define PULL_UP_POINTS 30.0f
+#define PULL_UP_Y_SHARE 0.24f
 #define SHADOW_OFFSET 2.0f
 #define NUMBER_LENGTH 32
 
@@ -57,6 +66,12 @@ static void bar(const Layout *layout, float x, float y, float width, float heigh
     text_quad(layout->text, x + layout->offset, y + layout->offset, width, height);
 }
 
+static void stroke(const Layout *layout, float x0, float y0, float x1, float y1, float weight)
+{
+    text_line(layout->text, x0 + layout->offset, y0 + layout->offset, x1 + layout->offset, y1 + layout->offset,
+             weight * layout->scale);
+}
+
 // where the camera looks, which is where the nose is pointing in the cockpit view
 static void marker(const Layout *layout)
 {
@@ -95,11 +110,65 @@ static void readouts(const Layout *layout, const HudState *state)
     centered(layout, layout->height - margin - VALUE_POINTS * layout->scale, VALUE_POINTS, number);
 }
 
+// ammunition left and the kill count, one in each bottom corner with the throttle readout between them
+static void mission_counters(const Layout *layout, const HudState *state)
+{
+    const float margin = MARGIN * layout->scale;
+    const float y = layout->height - margin - VALUE_POINTS * layout->scale;
+    char number[NUMBER_LENGTH];
+
+    snprintf(number, sizeof number, "MSL %d/%d", state->missiles, state->pylons);
+    line(layout, margin, y, VALUE_POINTS, number);
+
+    snprintf(number, sizeof number, "TGT %d/%d", state->targets_destroyed, state->targets_total);
+    right_aligned(layout, layout->width - margin, y, VALUE_POINTS, number);
+}
+
+static void lock_box(const Layout *layout, const HudState *state)
+{
+    stroke(layout, state->lock_x0, state->lock_y0, state->lock_x1, state->lock_y0, LOCK_WEIGHT);
+    stroke(layout, state->lock_x1, state->lock_y0, state->lock_x1, state->lock_y1, LOCK_WEIGHT);
+    stroke(layout, state->lock_x1, state->lock_y1, state->lock_x0, state->lock_y1, LOCK_WEIGHT);
+    stroke(layout, state->lock_x0, state->lock_y1, state->lock_x0, state->lock_y0, LOCK_WEIGHT);
+}
+
+// a chevron at a fixed distance from the center, swung around it by the designated target's screen bearing
+static void target_arrow(const Layout *layout, const HudState *state)
+{
+    const float radius = ARROW_RADIUS * layout->scale;
+    const float length = ARROW_LENGTH * layout->scale;
+    const float spread = ARROW_SPREAD * layout->scale;
+    const float sine = sinf(state->target_bearing);
+    const float cosine = cosf(state->target_bearing);
+    // the chevron's own points before the rotation, with 0 bearing pointing straight up
+    const float local[3][2] = {{0.0f, -radius}, {-spread, length - radius}, {spread, length - radius}};
+    float points[3][2];
+    char number[NUMBER_LENGTH];
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        points[i][0] = layout->width * 0.5f + local[i][0] * cosine - local[i][1] * sine;
+        points[i][1] = layout->height * 0.5f + local[i][0] * sine + local[i][1] * cosine;
+    }
+    stroke(layout, points[0][0], points[0][1], points[1][0], points[1][1], ARROW_WEIGHT);
+    stroke(layout, points[0][0], points[0][1], points[2][0], points[2][1], ARROW_WEIGHT);
+
+    snprintf(number, sizeof number, "%.1f KM", state->target_range / 1000.0f);
+    line(layout, points[0][0] - font_width(&layout->text->font, number) * glyph_scale(layout, LABEL_POINTS) * 0.5f,
+        points[0][1], LABEL_POINTS, number);
+}
+
+static void pull_up_warning(const Layout *layout)
+{
+    centered(layout, layout->height * PULL_UP_Y_SHARE, PULL_UP_POINTS, "PULL UP");
+}
+
 static void loadout(const Layout *layout, const HudState *state)
 {
     char number[NUMBER_LENGTH];
 
-    snprintf(number, sizeof number, "MISSILES %d/%d", state->missiles, state->pylons);
+    snprintf(number, sizeof number, "MISSILES %d/%d   TARGETS %d/%d", state->missiles, state->pylons,
+             state->targets_destroyed, state->targets_total);
     centered(layout, MARGIN * layout->scale, VALUE_POINTS, number);
 }
 
@@ -128,6 +197,16 @@ static void layers(const Layout *layout, const HudState *state)
     if (state->in_flight) {
         readouts(layout, state);
         marker(layout);
+        mission_counters(layout, state);
+        if (state->has_target) {
+            target_arrow(layout, state);
+        }
+        if (state->locked) {
+            lock_box(layout, state);
+        }
+        if (state->pull_up) {
+            pull_up_warning(layout);
+        }
     } else {
         loadout(layout, state);
     }

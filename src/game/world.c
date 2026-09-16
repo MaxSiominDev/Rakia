@@ -142,7 +142,7 @@ static int upload_model(World *world, const Model *model, Mesh **mesh, Material 
 }
 
 // nothing is measured off these models beyond their mesh, so the parsed data goes as soon as it is uploaded
-static int load_model(World *world, const char *relative, Mesh **mesh, Material **materials)
+int world_load(World *world, const char *relative, Mesh **mesh, Material **materials)
 {
     Model model;
     int uploaded;
@@ -389,7 +389,7 @@ static int load_stores(World *world)
     Mesh *mesh;
     Material *materials;
 
-    if (load_model(world, JSOW_MODEL, &mesh, &materials) != 0) {
+    if (world_load(world, JSOW_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
     world->missile_mesh = mesh;
@@ -447,7 +447,7 @@ static int load_shelters(World *world, Scene *scene)
     Material *materials;
     int i;
 
-    if (load_model(world, SHELTER_MODEL, &mesh, &materials) != 0) {
+    if (world_load(world, SHELTER_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
     for (i = 0; i < 2; i++) {
@@ -513,10 +513,13 @@ static int load_cart(World *world, Scene *scene)
         // the missiles lie along the cart, so their noses point across the jet's own heading
         Entity *missile =
             place(scene, world->missile_mesh, world->missile_materials, spot, VEC_PI * 0.5f, JSOW_SCALE);
+        Prop *missile_prop = add_prop(world, missile, VEC_PI * 0.5f, WORLD_PAVING + missile_half, PROP_MISSILE);
 
-        if (add_prop(world, missile, VEC_PI * 0.5f, WORLD_PAVING + missile_half, PROP_MISSILE) == NULL) {
+        if (missile_prop == NULL) {
             return -1;
         }
+        // a rearm sends a fired missile back to the slot it started in, wherever the cart has moved since
+        missile_prop->home = spot;
     }
 
     return 0;
@@ -529,7 +532,7 @@ static int load_ladder(World *world, Scene *scene)
     Material *materials;
     Entity *ladder;
 
-    if (load_model(world, LADDER_MODEL, &mesh, &materials) != 0) {
+    if (world_load(world, LADDER_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
     ladder = place(scene, mesh, materials, spot, 0.0f, LADDER_SCALE);
@@ -591,7 +594,7 @@ static int load_rails(World *world, Scene *scene, const Model *jet_model)
     Material *materials;
     int i;
 
-    if (load_model(world, AIM9_MODEL, &mesh, &materials) != 0) {
+    if (world_load(world, AIM9_MODEL, &mesh, &materials) != 0) {
         return -1;
     }
 
