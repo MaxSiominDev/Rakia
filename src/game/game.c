@@ -679,9 +679,9 @@ void game_render(void *context, int width, int height)
     hangar_carry(&game->hangar, &game->world);
     game->world.gear->hidden = !gear_is_down(game) || crashed(game);
     // hidden in the cockpit view since the hull would block the camera, but it still casts a shadow
-    // the roundels and both rail missiles are bolted to the jet, so they hide with it once it has crashed
+    // the markings and both rail missiles are bolted to the jet, so they hide with it once it has crashed
     game->world.jet->hidden = cockpit_camera(game) || crashed(game);
-    game->world.roundels->hidden = crashed(game);
+    game->world.markings->hidden = crashed(game);
     game->world.rails[0]->hidden = crashed(game);
     game->world.rails[1]->hidden = crashed(game);
 
