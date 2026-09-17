@@ -1,11 +1,12 @@
 #include "check.h"
+#include "engine/assets.h"
 #include "engine/obj.h"
 
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
 
-#define F16_PATH "assets/raw/aircraft/f16_rickslash/f16_rickslash.obj"
+#define F16_PATH "raw/aircraft/f16_rickslash/f16_rickslash.obj"
 
 static int indices_in_range(const Model *model)
 {
@@ -102,7 +103,7 @@ static void test_shapes(void)
     const ObjMaterial *plain;
     const ObjMaterial *backed;
 
-    check(obj_load(&model, "tests/fixtures/shapes.obj") == 0, "shapes.obj loads");
+    check(obj_load(&model, "shapes.obj") == 0, "shapes.obj loads");
     check(model.data.vertex_count == 7, "corners shared by the quad and the pentagon are deduplicated");
     check(model.data.index_count == 15, "a quad gives two triangles and a pentagon three");
     check(indices_in_range(&model), "shapes indices are in range");
@@ -110,7 +111,7 @@ static void test_shapes(void)
     check(strcmp(model.data.groups[0].name, "quad") == 0 && model.data.groups[0].index_count == 6, "quad group");
     check(strcmp(model.data.groups[1].name, "pentagon") == 0 && model.data.groups[1].first_index == 6 &&
           model.data.groups[1].index_count == 9, "pentagon group follows the quad");
-    check(strcmp(model.directory, "tests/fixtures") == 0, "directory is taken from the obj path");
+    check(strcmp(model.directory, ".") == 0, "a bare relative path leaves the directory as \".\"");
 
     check(model.material_count == 3, "an mtllib name with a space is resolved from the obj directory");
     if (model.material_count != 3) {
@@ -154,7 +155,7 @@ static void test_face_forms_and_groups(void)
     int a;
     int b;
 
-    check(obj_load(&model, "tests/fixtures/forms.obj") == 0, "forms.obj loads");
+    check(obj_load(&model, "forms.obj") == 0, "forms.obj loads");
     check(model.data.vertex_count == 14, "the (v, vt, vn) triple decides which corners share a vertex");
     check(model.data.index_count == 18, "six triangles");
     check(indices_in_range(&model), "forms indices are in range");
@@ -210,7 +211,7 @@ static void test_computed_normals(void)
     Model model;
     const float weighted = 1.0f / sqrtf(17.0f);
 
-    check(obj_load(&model, "tests/fixtures/no_normals.obj") == 0, "no_normals.obj loads");
+    check(obj_load(&model, "no_normals.obj") == 0, "no_normals.obj loads");
     check(model.data.vertex_count == 9 && model.data.index_count == 12, "no_normals counts");
     check_v3(vertex_at(&model, 2.0f, 0.0f, 0.0f)->normal, 0.0f, 0.0f, 1.0f, "a corner of the big triangle faces +z");
     check_v3(vertex_at(&model, 0.0f, 0.0f, 1.0f)->normal, 0.0f, 1.0f, 0.0f, "a corner of the small triangle faces +y");
@@ -226,7 +227,7 @@ static void test_tangents(void)
     Model model;
     int corner;
 
-    check(obj_load(&model, "tests/fixtures/tangents.obj") == 0, "tangents.obj loads");
+    check(obj_load(&model, "tangents.obj") == 0, "tangents.obj loads");
     check(model.data.group_count == 3, "tangents.obj has three groups");
     if (model.data.group_count != 3) {
         obj_free(&model);
@@ -258,7 +259,7 @@ static void test_missing_mtl(void)
 {
     Model model;
 
-    check(obj_load(&model, "tests/fixtures/missing_mtl.obj") == 0, "a missing mtllib is not fatal");
+    check(obj_load(&model, "missing_mtl.obj") == 0, "a missing mtllib is not fatal");
     check(model.material_count == 0 && model.materials == NULL, "a missing mtllib leaves no materials");
     check(model.data.group_count == 1 && model.data.groups[0].material == -1, "usemtl without a library gives -1");
     obj_free(&model);
@@ -268,9 +269,9 @@ static void test_errors(void)
 {
     Model model;
 
-    check(obj_load(&model, "tests/fixtures/does_not_exist.obj") == -1, "a missing file fails");
-    check(obj_load(&model, "tests/fixtures/bad_index.obj") == -1, "a face index past the last vertex fails");
-    check(obj_load(&model, "tests/fixtures/bad_mtl.obj") == -1, "a bad number in the mtl fails the load");
+    check(obj_load(&model, "does_not_exist.obj") == -1, "a missing file fails");
+    check(obj_load(&model, "bad_index.obj") == -1, "a face index past the last vertex fails");
+    check(obj_load(&model, "bad_mtl.obj") == -1, "a bad number in the mtl fails the load");
     check(model.data.vertices == NULL && model.data.vertex_count == 0 && model.materials == NULL,
           "a failed load leaves an empty model");
 }
@@ -284,6 +285,8 @@ static void test_f16(void)
     int bad_frames = 0;
     int i;
 
+    // the F-16 lives under the real assets tree, not the tests/fixtures root the other cases use
+    assets_init("assets");
     check(obj_load(&model, F16_PATH) == 0, "the F-16 loads");
     if (model.data.vertex_count == 0) {
         return;
@@ -335,7 +338,9 @@ static void test_free(void)
     obj_free(&model);
     check(model.data.vertices == NULL && model.materials == NULL, "freeing an empty model is harmless");
 
-    check(obj_load(&model, "tests/fixtures/shapes.obj") == 0, "shapes.obj loads again");
+    // test_f16 pointed the assets root at "assets"; fixtures live under "tests/fixtures" again
+    assets_init("tests/fixtures");
+    check(obj_load(&model, "shapes.obj") == 0, "shapes.obj loads again");
     obj_free(&model);
     check(model.data.vertices == NULL && model.data.indices == NULL && model.data.groups == NULL &&
           model.materials == NULL && model.data.vertex_count == 0 && model.material_count == 0 &&
@@ -344,6 +349,7 @@ static void test_free(void)
 
 void test_obj_main(void)
 {
+    assets_init("tests/fixtures");
     test_shapes();
     test_face_forms_and_groups();
     test_computed_normals();

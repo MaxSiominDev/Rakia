@@ -1,6 +1,5 @@
 #include "engine/foliage.h"
 
-#include "engine/assets.h"
 #include "engine/gl_ext.h"
 #include "engine/material.h"
 #include "engine/noise.h"
@@ -313,13 +312,7 @@ int foliage_init(Foliage *foliage)
         return -1;
     }
     for (kind = 0; kind < FOLIAGE_KINDS; kind++) {
-        char path[ASSETS_PATH_MAX];
-
-        if (assets_path(path, sizeof path, kinds[kind].image) != 0) {
-            fprintf(stderr, "asset path is too long: %s\n", kinds[kind].image);
-            return -1;
-        }
-        foliage->images[kind] = material_texture(path, TEXTURE_CUTOUT);
+        foliage->images[kind] = material_texture(kinds[kind].image, TEXTURE_CUTOUT);
         if (foliage->images[kind] == 0) {
             return -1;
         }

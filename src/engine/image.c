@@ -1,36 +1,24 @@
 #include "engine/image.h"
 
-#include <errno.h>
-#include <stdio.h>
+#include "engine/assets.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-static FILE *open_image(const char *path, const char **reason)
+int image_load(Image *image, const char *relative, const char **reason)
 {
-    FILE *file = fopen(path, "rb");
+    unsigned char *data;
+    size_t size;
 
-    if (file == NULL) {
-        *reason = strerror(errno);
-        return NULL;
-    }
-    stbi_set_flip_vertically_on_load(1);
-
-    return file;
-}
-
-int image_load(Image *image, const char *path, const char **reason)
-{
-    FILE *file = open_image(path, reason);
-
-    if (file == NULL) {
+    if (assets_read(relative, &data, &size, reason) != 0) {
         return -1;
     }
-
-    image->pixels = stbi_load_from_file(file, &image->width, &image->height, &image->channels, 0);
-    fclose(file);
+    stbi_set_flip_vertically_on_load(1);
+    image->pixels = stbi_load_from_memory(data, (int)size, &image->width, &image->height, &image->channels, 0);
+    free(data);
     if (image->pixels == NULL) {
         *reason = stbi_failure_reason();
         return -1;
@@ -40,16 +28,17 @@ int image_load(Image *image, const char *path, const char **reason)
 }
 
 // every frame is read as rgba, so the cells are copied without looking at what the file held
-static int load_rgba(Image *image, const char *path, const char **reason)
+static int load_rgba(Image *image, const char *relative, const char **reason)
 {
-    FILE *file = open_image(path, reason);
+    unsigned char *data;
+    size_t size;
 
-    if (file == NULL) {
+    if (assets_read(relative, &data, &size, reason) != 0) {
         return -1;
     }
-
-    image->pixels = stbi_load_from_file(file, &image->width, &image->height, &image->channels, 4);
-    fclose(file);
+    stbi_set_flip_vertically_on_load(1);
+    image->pixels = stbi_load_from_memory(data, (int)size, &image->width, &image->height, &image->channels, 4);
+    free(data);
     if (image->pixels == NULL) {
         *reason = stbi_failure_reason();
         return -1;
@@ -197,17 +186,18 @@ void image_free(Image *image)
     image->pixels = NULL;
 }
 
-int image_load_hdr(HdrImage *image, const char *path, const char **reason)
+int image_load_hdr(HdrImage *image, const char *relative, const char **reason)
 {
-    FILE *file = open_image(path, reason);
+    unsigned char *data;
+    size_t size;
     int channels;
 
-    if (file == NULL) {
+    if (assets_read(relative, &data, &size, reason) != 0) {
         return -1;
     }
-
-    image->pixels = stbi_loadf_from_file(file, &image->width, &image->height, &channels, 3);
-    fclose(file);
+    stbi_set_flip_vertically_on_load(1);
+    image->pixels = stbi_loadf_from_memory(data, (int)size, &image->width, &image->height, &channels, 3);
+    free(data);
     if (image->pixels == NULL) {
         *reason = stbi_failure_reason();
         return -1;

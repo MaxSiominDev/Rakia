@@ -1,6 +1,5 @@
 #include "engine/water.h"
 
-#include "engine/assets.h"
 #include "engine/gl_ext.h"
 #include "engine/material.h"
 #include "engine/mesh_data.h"
@@ -16,19 +15,14 @@
 
 int water_init(Water *water, GLuint panorama)
 {
-    char path[ASSETS_PATH_MAX];
     MeshData quad;
 
     memset(water, 0, sizeof *water);
     if (shader_load(&water->shader, "water") != 0) {
         return -1;
     }
-    if (assets_path(path, sizeof path, RIPPLE_MAP) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", RIPPLE_MAP);
-        return -1;
-    }
     water->panorama = panorama;
-    water->ripples = material_texture(path, TEXTURE_DATA);
+    water->ripples = material_texture(RIPPLE_MAP, TEXTURE_DATA);
     if (water->ripples == 0) {
         return -1;
     }

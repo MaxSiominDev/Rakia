@@ -50,20 +50,20 @@ void material_default(Material *material)
     material->emissive_map = white_map;
 }
 
-GLuint material_texture(const char *path, TextureKind kind)
+GLuint material_texture(const char *relative, TextureKind kind)
 {
     GLuint id;
     int i;
 
     for (i = 0; i < cache_count; i++) {
-        if (cache[i].kind == kind && strcmp(cache[i].path, path) == 0) {
+        if (cache[i].kind == kind && strcmp(cache[i].path, relative) == 0) {
             return cache[i].id;
         }
     }
 
-    id = texture_load(path, kind);
+    id = texture_load(relative, kind);
     if (id != 0 && cache_count < TEXTURE_CACHE_SIZE) {
-        snprintf(cache[cache_count].path, sizeof cache[cache_count].path, "%s", path);
+        snprintf(cache[cache_count].path, sizeof cache[cache_count].path, "%s", relative);
         cache[cache_count].kind = kind;
         cache[cache_count].id = id;
         cache_count++;
@@ -72,6 +72,7 @@ GLuint material_texture(const char *path, TextureKind kind)
     return id;
 }
 
+// avoids a redundant "./" when directory has no directory component of its own
 static GLuint load_map(const char *directory, const char *name, TextureKind kind, GLuint fallback)
 {
     char path[OBJ_PATH_MAX * 2];
@@ -81,7 +82,11 @@ static GLuint load_map(const char *directory, const char *name, TextureKind kind
         return fallback;
     }
 
-    snprintf(path, sizeof path, "%s/%s", directory, name);
+    if (strcmp(directory, ".") == 0) {
+        snprintf(path, sizeof path, "%s", name);
+    } else {
+        snprintf(path, sizeof path, "%s/%s", directory, name);
+    }
     id = material_texture(path, kind);
 
     return id != 0 ? id : fallback;

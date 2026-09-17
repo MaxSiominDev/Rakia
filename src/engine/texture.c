@@ -99,31 +99,31 @@ GLuint texture_create(Image *image, TextureKind kind, const char *name)
     return finish_texture(id, name, error);
 }
 
-GLuint texture_load(const char *path, TextureKind kind)
+GLuint texture_load(const char *relative, TextureKind kind)
 {
     Image image;
     const char *reason;
     GLuint id;
 
-    if (image_load(&image, path, &reason) != 0) {
-        fprintf(stderr, "cannot load texture %s: %s\n", path, reason);
+    if (image_load(&image, relative, &reason) != 0) {
+        fprintf(stderr, "cannot load texture %s: %s\n", relative, reason);
         return 0;
     }
-    id = texture_create(&image, kind, path);
+    id = texture_create(&image, kind, relative);
     image_free(&image);
 
     return id;
 }
 
-GLuint texture_load_hdr(const char *path)
+GLuint texture_load_hdr(const char *relative)
 {
     HdrImage image;
     const char *reason;
     GLuint id;
     GLenum error;
 
-    if (image_load_hdr(&image, path, &reason) != 0) {
-        fprintf(stderr, "cannot load panorama %s: %s\n", path, reason);
+    if (image_load_hdr(&image, relative, &reason) != 0) {
+        fprintf(stderr, "cannot load panorama %s: %s\n", relative, reason);
         return 0;
     }
 
@@ -136,5 +136,5 @@ GLuint texture_load_hdr(const char *path)
         error = glGetError();
     }
 
-    return finish_texture(id, path, error);
+    return finish_texture(id, relative, error);
 }

@@ -33,6 +33,7 @@ void test_options_main(void);
 void test_timestep_main(void);
 void test_input_main(void);
 void test_assets_main(void);
+void test_pack_main(void);
 void test_mesh_data_main(void);
 void test_camera_main(void);
 void test_picking_main(void);
@@ -65,6 +66,7 @@ int main(void)
     test_timestep_main();
     test_input_main();
     test_assets_main();
+    test_pack_main();
     test_mesh_data_main();
     test_camera_main();
     test_picking_main();

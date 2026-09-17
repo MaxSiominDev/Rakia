@@ -31,7 +31,7 @@ typedef struct {
 } Model;
 
 // groups with no usemtl get material -1; faces before the first g line form a group named ""
-int obj_load(Model *model, const char *path);
+int obj_load(Model *model, const char *relative);
 void obj_free(Model *model);
 
 #endif

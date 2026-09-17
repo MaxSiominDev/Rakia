@@ -1,6 +1,5 @@
 #include "game/effects.h"
 
-#include "engine/assets.h"
 #include "engine/mesh_data.h"
 #include "engine/noise.h"
 
@@ -93,36 +92,14 @@ static const char *const flame_frames[FLAME_FRAMES] = {
     FLAME_FRAME("1"), FLAME_FRAME("2"), FLAME_FRAME("3"), FLAME_FRAME("4")
 };
 
-static int load_sheet(Particles *particles, const char *const *frames, int count, int columns, TextureKind kind)
-{
-    char paths[count][ASSETS_PATH_MAX];
-    const char *list[count];
-    int i;
-
-    for (i = 0; i < count; i++) {
-        if (assets_path(paths[i], sizeof paths[i], frames[i]) != 0) {
-            fprintf(stderr, "asset path is too long: %s\n", frames[i]);
-            return -1;
-        }
-        list[i] = paths[i];
-    }
-
-    return particles_sheet(particles, list, count, columns, kind);
-}
-
 static int load_marks(Effects *effects, Scene *scene)
 {
-    char path[ASSETS_PATH_MAX];
     MeshData data;
     int i;
 
-    if (assets_path(path, sizeof path, SCORCH_TEXTURE) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", SCORCH_TEXTURE);
-        return -1;
-    }
     material_default(&effects->burn);
     effects->burn.kd = burn_color;
-    effects->burn.diffuse_map = material_texture(path, TEXTURE_CUTOUT);
+    effects->burn.diffuse_map = material_texture(SCORCH_TEXTURE, TEXTURE_CUTOUT);
     if (effects->burn.diffuse_map == 0) {
         return -1;
     }
@@ -149,12 +126,12 @@ static int load_marks(Effects *effects, Scene *scene)
 int effects_init(Effects *effects, Particles *particles, Scene *scene)
 {
     effects->particles = particles;
-    effects->flash_sheet = load_sheet(particles, flash_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
-    effects->fire_sheet = load_sheet(particles, fire_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
+    effects->flash_sheet = particles_sheet(particles, flash_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
+    effects->fire_sheet = particles_sheet(particles, fire_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
     // smoke drifts far and shrinks on screen, so it keeps its mipmaps
-    effects->smoke_sheet = load_sheet(particles, smoke_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
+    effects->smoke_sheet = particles_sheet(particles, smoke_frames, SHEET_FRAMES, SHEET_COLUMNS, TEXTURE_CUTOUT);
     // under a third opaque, so mipmaps would smear it away; it never lives long enough to shrink
-    effects->flame_sheet = load_sheet(particles, flame_frames, FLAME_FRAMES, FLAME_COLUMNS, TEXTURE_SPRITE);
+    effects->flame_sheet = particles_sheet(particles, flame_frames, FLAME_FRAMES, FLAME_COLUMNS, TEXTURE_SPRITE);
     if (effects->flash_sheet < 0 || effects->fire_sheet < 0 || effects->smoke_sheet < 0 ||
         effects->flame_sheet < 0) {
         return -1;

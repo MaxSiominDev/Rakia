@@ -201,7 +201,14 @@ int platform_run(const Options *run_options, const PlatformApp *run_app, int *ar
     loaded = gl_ext_load(&missing) == 0;
     gl_ext_print_status();
     if (!loaded) {
-        fprintf(stderr, "this OpenGL driver has no %s, which Rakia needs\n", missing);
+        char names[256];
+
+        gl_ext_missing_required(names, sizeof names);
+        if (names[0] != '\0') {
+            fprintf(stderr, "the graphics driver lacks the OpenGL features Rakia needs: %s\n", names);
+        } else {
+            fprintf(stderr, "this OpenGL driver has no %s, which Rakia needs\n", missing);
+        }
         return EXIT_FAILURE;
     }
     gl_ext_set_swap_interval(1);

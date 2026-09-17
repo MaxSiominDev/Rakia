@@ -1,6 +1,5 @@
 #include "game/game.h"
 
-#include "engine/assets.h"
 #include "engine/terrain.h"
 #include "game/hud.h"
 
@@ -178,13 +177,8 @@ static void start_takeoff(Game *game)
 int game_init(void *context)
 {
     Game *game = context;
-    char panorama[ASSETS_PATH_MAX];
 
-    if (assets_path(panorama, sizeof panorama, SKY_PANORAMA) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", SKY_PANORAMA);
-        return -1;
-    }
-    if (renderer_init(&game->renderer, panorama) != 0 ||
+    if (renderer_init(&game->renderer, SKY_PANORAMA) != 0 ||
         world_init(&game->world, &game->scene, &game->aircraft) != 0 || text_init(&game->hud) != 0 ||
         particles_init(&game->particles) != 0 ||
         targets_init(&game->targets, &game->world, &game->scene) != 0 ||

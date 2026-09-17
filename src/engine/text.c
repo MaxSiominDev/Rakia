@@ -4,16 +4,15 @@
 #include "engine/gl_ext.h"
 #include "engine/material.h"
 
-#include <errno.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define METRICS_FILE "generated/hud_font.txt"
 #define ATLAS_FILE "generated/hud_font.png"
-#define METRICS_CAPACITY 8192
 #define LINE_CAPACITY 128
 
 static int parse_line(Font *font, const char *line)
@@ -257,48 +256,26 @@ void text_end(Text *text)
     glUseProgram(0);
 }
 
-static int read_metrics(char *out, size_t size, const char *path)
-{
-    FILE *file = fopen(path, "rb");
-    size_t length;
-
-    if (file == NULL) {
-        fprintf(stderr, "cannot open %s: %s\n", path, strerror(errno));
-        return -1;
-    }
-    length = fread(out, 1, size - 1, file);
-    fclose(file);
-    if (length == size - 1) {
-        fprintf(stderr, "cannot read %s: the metrics are longer than %d bytes\n", path, (int)size - 1);
-        return -1;
-    }
-    out[length] = '\0';
-
-    return 0;
-}
-
 int text_init(Text *text)
 {
-    char metrics_path[ASSETS_PATH_MAX];
-    char atlas_path[ASSETS_PATH_MAX];
-    char metrics[METRICS_CAPACITY];
+    unsigned char *metrics;
+    size_t metrics_size;
+    const char *reason;
 
     memset(text, 0, sizeof *text);
-    if (assets_path(metrics_path, sizeof metrics_path, METRICS_FILE) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", METRICS_FILE);
+    if (assets_read(METRICS_FILE, &metrics, &metrics_size, &reason) != 0) {
+        fprintf(stderr, "cannot open %s: %s\n", METRICS_FILE, reason);
         return -1;
     }
-    if (assets_path(atlas_path, sizeof atlas_path, ATLAS_FILE) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", ATLAS_FILE);
+    if (font_parse(&text->font, (const char *)metrics) != 0) {
+        free(metrics);
         return -1;
     }
-    if (read_metrics(metrics, sizeof metrics, metrics_path) != 0 || font_parse(&text->font, metrics) != 0) {
-        return -1;
-    }
+    free(metrics);
     if (shader_load(&text->shader, "hud") != 0) {
         return -1;
     }
-    text->atlas = material_texture(atlas_path, TEXTURE_SCREEN);
+    text->atlas = material_texture(ATLAS_FILE, TEXTURE_SCREEN);
     if (text->atlas == 0) {
         return -1;
     }
