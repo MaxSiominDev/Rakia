@@ -9,6 +9,11 @@ MENORAH = 'assets/generated/menorah.png'
 
 SUPERSAMPLE = 4
 BLUE = (0x00, 0x38, 0xB8)
+# a paint white rather than a pure one: 210 is the brightest flat white measured on the
+# jet's own diffuse texture, so a sunlit disc no longer blooms past the skin around it;
+# the disc is also a flat quad facing the sun more directly than the curved skin, but that
+# is a geometry difference this script cannot reach, so only the paint tone is changed
+DISC_WHITE = (210, 210, 210)
 
 # roundel: white disc, radius 100, with an outline Star of David like the flag of Israel
 ROUNDEL_SIZE = 1024
@@ -49,9 +54,9 @@ def draw_roundel():
     down = triangle_band(size, cx, cy, 90, outer_r, inner_r)
     star = ImageChops.lighter(up, down)
 
-    # white under the star and the disc's own edge, so downsampling never blends in black
-    image = Image.new('RGBA', size, (255, 255, 255, 0))
-    image.paste((255, 255, 255, 255), mask=disc)
+    # DISC_WHITE under the star and the disc's own edge, so downsampling never blends in black
+    image = Image.new('RGBA', size, DISC_WHITE + (0,))
+    image.paste(DISC_WHITE + (255,), mask=disc)
     image.paste(BLUE + (255,), mask=star)
     return image.resize((ROUNDEL_SIZE, ROUNDEL_SIZE), Image.LANCZOS)
 

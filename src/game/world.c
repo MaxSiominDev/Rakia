@@ -27,6 +27,8 @@
 #define RUNWAY_TEXTURE "raw/textures/runway_asphalt_clean_asphalt/clean_asphalt"
 #define ROUNDEL_TEXTURE "generated/roundel"
 #define MENORAH_TEXTURE "generated/menorah"
+#define JET_PAINT_TEXTURE "generated/f16_paint"
+#define JET_PAINT_METAL_ROUGH_TEXTURE "generated/f16_paint_metal_rough"
 
 #define APRON_SIZE 200.0f
 #define APRON_TILE 1.8f
@@ -688,6 +690,13 @@ static int load_jet(World *world, Scene *scene)
     }
     // same metalness scale as the store missiles
     materials[0].metallic *= 0.4f;
+    // the collected texture carries USAF markings; the generated copies paint them out of both maps
+    materials[0].diffuse_map = named_texture(JET_PAINT_TEXTURE, ".png", TEXTURE_COLOR);
+    materials[0].metal_rough_map = named_texture(JET_PAINT_METAL_ROUGH_TEXTURE, ".png", TEXTURE_DATA);
+    if (materials[0].diffuse_map == 0 || materials[0].metal_rough_map == 0) {
+        obj_free(&model);
+        return -1;
+    }
     // world_park puts it on its spot once everything that rides on it exists
     world->jet = place(scene, mesh, materials, v3(0.0f, 0.0f, 0.0f), WORLD_PARK_HEADING, JET_SCALE);
     if (world->jet == NULL) {

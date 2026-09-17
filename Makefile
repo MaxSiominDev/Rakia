@@ -53,9 +53,12 @@ font:
 markings:
 	python3 tools/gen-markings.py
 
+paint:
+	python3 tools/gen-jet-paint.py
+
 clean:
 	rm -rf $(BUILD) $(WINBUILD) $(TARGET) $(WINTARGET)
 
 -include $(OBJS:.o=.d) $(WINOBJS:.o=.d)
 
-.PHONY: all windows test font markings clean
+.PHONY: all windows test font markings paint clean
