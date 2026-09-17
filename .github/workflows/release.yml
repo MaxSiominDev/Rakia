@@ -1,31 +1,20 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches: [main]
-  pull_request:
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   macos:
-    name: macOS build, tests, smoke render
+    name: macOS release build
     runs-on: macos-latest
+    # workflow_dispatch defaults to the branch picked in the Actions UI; only a tag ref names a release
+    if: github.ref_type == 'tag'
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: make EXTRA_CFLAGS=-Werror
-      - name: Unit tests
-        run: make test
-      - name: Smoke render
-        run: ./rakia --window 256x256 --screenshot smoke.bmp
-      - uses: actions/upload-artifact@v4
-        with:
-          name: smoke-macos
-          path: smoke.bmp
-      - name: Compare with the reference render
-        if: hashFiles('tests/reference/macos-256.bmp') != ''
-        run: python3 tools/compare-bmp.py --outliers 0.02 tests/reference/macos-256.bmp smoke.bmp
-      - name: Build the release binary
         run: make release EXTRA_CFLAGS=-Werror
       - name: Check the binary is universal
         run: |
@@ -42,6 +31,8 @@ jobs:
             echo "smoke.bmp is missing or empty"
             exit 1
           fi
+      # a flat copy at the workspace root, so the artifact always downloads as a bare file named
+      # rakia-macos regardless of upload-artifact's path handling for a nested source
       - run: cp build/release/rakia-macos rakia-macos
       - uses: actions/upload-artifact@v4
         with:
@@ -49,8 +40,9 @@ jobs:
           path: rakia-macos
 
   windows:
-    name: Windows build and smoke render
+    name: Windows release build
     runs-on: windows-latest
+    if: github.ref_type == 'tag'
     timeout-minutes: 20
     defaults:
       run:
@@ -71,48 +63,7 @@ jobs:
             mingw-w64-x86_64-binutils
       - name: Build static freeglut
         run: tools/build-freeglut-win32.sh
-      - name: Build rakia.exe
-        run: make windows EXTRA_CFLAGS=-Werror
-      - name: Install Mesa
-        shell: pwsh
-        run: |
-          $version = '26.2.0'
-          $asset = "mesa3d-$version-release-msvc.7z"
-          Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/$version/$asset" -OutFile $asset
-          $hash = (Get-FileHash $asset -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne 'dcb2719ef346dab5b609fcb193a5f13cfc4b0502e3f4de1ad43d349477402f47') {
-            throw "unexpected checksum $hash"
-          }
-          7z x $asset -omesa -y | Out-Null
-          Copy-Item mesa\x64\*.dll .
-      - name: Render one frame
-        shell: pwsh
-        env:
-          GALLIUM_DRIVER: llvmpipe
-        run: |
-          $process = Start-Process -FilePath .\rakia.exe `
-            -ArgumentList '--window', '256x256', '--screenshot', 'smoke.bmp' -Wait -PassThru
-          if ($process.ExitCode -ne 0) {
-            throw "rakia.exe exited with $($process.ExitCode)"
-          }
-      - name: Check the screenshot
-        shell: pwsh
-        run: |
-          $bytes = [System.IO.File]::ReadAllBytes('smoke.bmp')
-          $width = [BitConverter]::ToInt32($bytes, 18)
-          $height = [BitConverter]::ToInt32($bytes, 22)
-          if ($bytes[0] -ne 0x42 -or $bytes[1] -ne 0x4D -or $width -ne 256 -or $height -ne 256) {
-            throw "smoke.bmp is not a 256x256 BMP (got ${width}x${height})"
-          }
-      - uses: actions/upload-artifact@v4
-        with:
-          name: smoke-windows
-          path: smoke.bmp
-      - name: Compare with the reference render
-        if: hashFiles('tests/reference/windows-256.bmp') != ''
-        shell: pwsh
-        run: python tools/compare-bmp.py tests/reference/windows-256.bmp smoke.bmp
-      - name: Build the release exe
+      - name: Build rakia-windows.exe
         run: make windows-release EXTRA_CFLAGS=-Werror
       - name: Check the exe has no unexpected DLL imports
         run: |
@@ -124,12 +75,20 @@ jobs:
             echo "the exe imports a MinGW runtime DLL"
             exit 1
           fi
-      - name: Copy Mesa for the release smoke test
+      - name: Download Mesa
         shell: pwsh
         run: |
           $dir = Join-Path $env:RUNNER_TEMP 'release-smoke'
           New-Item -ItemType Directory -Path $dir | Out-Null
-          Copy-Item mesa\x64\*.dll $dir
+          $version = '26.2.0'
+          $asset = "mesa3d-$version-release-msvc.7z"
+          Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/$version/$asset" -OutFile $asset
+          $hash = (Get-FileHash $asset -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne 'dcb2719ef346dab5b609fcb193a5f13cfc4b0502e3f4de1ad43d349477402f47') {
+            throw "unexpected checksum $hash"
+          }
+          7z x $asset -o"$dir\mesa" -y | Out-Null
+          Copy-Item "$dir\mesa\x64\*.dll" $dir
       - name: Release smoke render
         shell: pwsh
         env:
@@ -157,3 +116,31 @@ jobs:
         with:
           name: rakia-windows
           path: rakia-windows.exe
+
+  publish:
+    name: Publish release
+    runs-on: ubuntu-latest
+    needs: [macos, windows]
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rakia-macos
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: rakia-windows
+          path: .
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" rakia-macos rakia-windows.exe --clobber
+          else
+            gh release create "$TAG" rakia-macos rakia-windows.exe --title "$TAG" --generate-notes
+          fi

@@ -116,18 +116,6 @@ static const char *const rail_groups[2] = {"rocket_holder_aim_120", "rocket_hold
 #define CART_LOAD_GROUP "Object_2"
 #define CART_FRAME_GROUP "Object_3"
 
-static int open_model(Model *model, const char *relative)
-{
-    char path[ASSETS_PATH_MAX];
-
-    if (assets_path(path, sizeof path, relative) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", relative);
-        return -1;
-    }
-
-    return obj_load(model, path);
-}
-
 static int upload_model(World *world, const Model *model, Mesh **mesh, Material **materials)
 {
     int i;
@@ -158,7 +146,7 @@ int world_load(World *world, const char *relative, Mesh **mesh, Material **mater
     Model model;
     int uploaded;
 
-    if (open_model(&model, relative) != 0) {
+    if (obj_load(&model, relative) != 0) {
         return -1;
     }
     uploaded = upload_model(world, &model, mesh, materials);
@@ -201,15 +189,10 @@ static Material *plain_material(World *world, Vec3 kd, float roughness, float me
 static GLuint named_texture(const char *prefix, const char *suffix, TextureKind kind)
 {
     char relative[ASSETS_PATH_MAX];
-    char path[ASSETS_PATH_MAX];
 
     snprintf(relative, sizeof relative, "%s%s", prefix, suffix);
-    if (assets_path(path, sizeof path, relative) != 0) {
-        fprintf(stderr, "asset path is too long: %s\n", relative);
-        return 0;
-    }
 
-    return material_texture(path, kind);
+    return material_texture(relative, kind);
 }
 
 // every collected ground set is named <prefix>_diffuse_2k.jpg and so on
@@ -501,7 +484,7 @@ static int load_cart(World *world, Scene *scene)
     int frame_group;
     int i;
 
-    if (open_model(&model, CART_MODEL) != 0) {
+    if (obj_load(&model, CART_MODEL) != 0) {
         return -1;
     }
     if (upload_model(world, &model, &mesh, &materials) != 0) {
@@ -681,7 +664,7 @@ static int load_jet(World *world, Scene *scene)
         return -1;
     }
 
-    if (open_model(&model, JET_MODEL) != 0) {
+    if (obj_load(&model, JET_MODEL) != 0) {
         return -1;
     }
     if (upload_model(world, &model, &mesh, &materials) != 0) {

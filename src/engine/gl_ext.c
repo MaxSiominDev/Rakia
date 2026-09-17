@@ -143,3 +143,24 @@ int gl_ext_present(GlExtension extension)
 {
     return present[extension];
 }
+
+void gl_ext_missing_required(char *out, size_t size)
+{
+    size_t used = 0;
+    int i;
+
+    out[0] = '\0';
+    for (i = 0; i < GLEXT_COUNT; i++) {
+        int written;
+
+        if (!extensions[i].required || present[i]) {
+            continue;
+        }
+
+        written = snprintf(out + used, size - used, "%s%s", used == 0 ? "" : " ", extensions[i].name);
+        if (written < 0 || (size_t)written >= size - used) {
+            return;
+        }
+        used += (size_t)written;
+    }
+}

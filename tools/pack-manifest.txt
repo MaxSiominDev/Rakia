@@ -1,0 +1,71 @@
+# Lists what tools/pack-assets.py embeds in a release build, as paths relative to assets/. A line ending
+# in / pulls in every file under that directory; any other line names one file. Confirmed complete by an
+# instrumented build that logged every path the game opened during a scripted playthrough (hangar with a
+# missile mount, takeoff, flight, lock, launch, hit and explosion, rearm, mission complete, crash return).
+
+# shaders
+shaders/
+
+# generated: font atlas, jet markings, painted-over jet texture
+generated/
+
+# sky panorama
+raw/sky/belfast_sunset_puresky/belfast_sunset_puresky_2k.hdr
+
+# jet
+raw/aircraft/f16_rickslash/
+
+# weapons
+raw/weapons/aim9_rickslash/
+raw/weapons/agm154_jsow_rickslash/
+
+# airfield
+raw/airfield/shelter_quonset_hut/
+raw/airfield/missile_cart_r27/
+raw/airfield/maintenance_ladder/
+
+# targets
+raw/targets/radome_geodesic_dome_quaternius/
+raw/targets/radar_dish_quaternius/
+raw/targets/sam_2k12_kub/
+raw/targets/truck_ural/
+raw/targets/truck_m939/
+raw/targets/fuel_depot_storage_tanks/
+
+# ground textures
+raw/textures/apron_concrete_concrete_pavement/
+raw/textures/runway_asphalt_clean_asphalt/
+raw/textures/sand_dunes_Ground097/
+raw/textures/rocky_ground_rocky_trail_02/
+raw/textures/rock_cliff_Rock029/
+raw/textures/green_grass_Grass004/
+raw/textures/dry_grass_withered_grass/
+
+# foliage cutouts
+raw/foliage/desert_shrubs_trigger_rally_onsemeliot/dry-grass.png
+raw/foliage/desert_shrubs_trigger_rally_onsemeliot/thorn-bush.png
+raw/foliage/acacia_standin_trigger_rally_onsemeliot/wide-tree.png
+raw/foliage/conifers_photo_rubberduck/spruce_1.png
+
+# sea ripple map
+raw/water/sea_waves_keith333/SeaWaves_N.jpg
+
+# explosion, flash and smoke sheets
+raw/effects/kenney_smoke_particles/flash/
+raw/effects/kenney_smoke_particles/explosion/
+raw/effects/kenney_smoke_particles/white_puff/whitePuff00.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff01.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff02.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff03.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff04.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff05.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff06.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff07.png
+raw/effects/kenney_smoke_particles/white_puff/whitePuff08.png
+
+# afterburner and exhaust flame, scorch mark
+raw/effects/kenney_particle_pack/flame_01.png
+raw/effects/kenney_particle_pack/flame_02.png
+raw/effects/kenney_particle_pack/flame_03.png
+raw/effects/kenney_particle_pack/flame_04.png
+raw/effects/kenney_particle_pack/scorch_02.png

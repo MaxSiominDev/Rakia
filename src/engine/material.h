@@ -34,7 +34,7 @@ void material_init(void);
 void material_default(Material *material);
 void material_load(Material *material, const ObjMaterial *source, const char *directory);
 // each file is uploaded once; 0 when it cannot be read
-GLuint material_texture(const char *path, TextureKind kind);
+GLuint material_texture(const char *relative, TextureKind kind);
 void material_bind(const Material *material, Shader *shader);
 
 #endif

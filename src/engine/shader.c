@@ -3,69 +3,38 @@
 #include "engine/assets.h"
 #include "engine/gl_ext.h"
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define LOG_CAPACITY 4096
 
-static char *read_file(const char *path)
-{
-    FILE *file = fopen(path, "rb");
-    long size;
-    char *text;
-
-    if (file == NULL) {
-        fprintf(stderr, "cannot open %s: %s\n", path, strerror(errno));
-        return NULL;
-    }
-
-    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) < 0 || fseek(file, 0, SEEK_SET) != 0) {
-        fprintf(stderr, "cannot read %s: %s\n", path, strerror(errno));
-        fclose(file);
-        return NULL;
-    }
-
-    text = malloc((size_t)size + 1);
-    if (text == NULL || fread(text, 1, (size_t)size, file) != (size_t)size) {
-        fprintf(stderr, "cannot read %s\n", path);
-        free(text);
-        fclose(file);
-        return NULL;
-    }
-    text[size] = '\0';
-    fclose(file);
-
-    return text;
-}
-
 static int source_path(char *out, const char *name, const char *extension)
 {
-    char relative[256];
-
-    snprintf(relative, sizeof relative, "shaders/%s.%s", name, extension);
-    if (assets_path(out, ASSETS_PATH_MAX, relative) != 0) {
-        fprintf(stderr, "shader path is too long: %s\n", relative);
+    if (snprintf(out, ASSETS_PATH_MAX, "shaders/%s.%s", name, extension) >= ASSETS_PATH_MAX) {
+        fprintf(stderr, "shader path is too long: shaders/%s.%s\n", name, extension);
         return -1;
     }
 
     return 0;
 }
 
-static GLuint compile(GLenum type, const char *path)
+static GLuint compile(GLenum type, const char *relative)
 {
-    char *source = read_file(path);
+    unsigned char *source;
+    size_t source_size;
+    const char *reason;
     const GLchar *sources[1];
     GLuint shader;
     GLint compiled = GL_FALSE;
 
-    if (source == NULL) {
+    if (assets_read(relative, &source, &source_size, &reason) != 0) {
+        fprintf(stderr, "cannot open %s: %s\n", relative, reason);
         return 0;
     }
 
     shader = glCreateShader(type);
-    sources[0] = source;
+    sources[0] = (const GLchar *)source;
     glShaderSource(shader, 1, sources, NULL);
     glCompileShader(shader);
     free(source);
@@ -75,7 +44,7 @@ static GLuint compile(GLenum type, const char *path)
         char log[LOG_CAPACITY];
 
         glGetShaderInfoLog(shader, sizeof log, NULL, log);
-        fprintf(stderr, "%s: compile failed\n%s\n", path, log);
+        fprintf(stderr, "%s: compile failed\n%s\n", relative, log);
         glDeleteShader(shader);
         return 0;
     }

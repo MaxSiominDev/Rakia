@@ -1,6 +1,8 @@
 #ifndef GL_EXT_H
 #define GL_EXT_H
 
+#include <stddef.h>
+
 #include "engine/gl_compat.h"
 
 typedef enum {
@@ -75,5 +77,9 @@ void gl_ext_print_status(void);
 int gl_ext_present(GlExtension extension);
 int gl_ext_list_has(const char *list, const char *name);
 void gl_ext_set_swap_interval(int interval);
+// space-joins the names of every required extension gl_ext_load found absent, into out (empty if none,
+// e.g. because the failure was instead an entry-point resolution failure on Windows); meant to be called
+// only after gl_ext_load has returned, so present[] reflects the driver's real extension list
+void gl_ext_missing_required(char *out, size_t size);
 
 #endif

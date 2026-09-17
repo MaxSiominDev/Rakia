@@ -1,7 +1,8 @@
 #include "engine/obj.h"
 
+#include "engine/assets.h"
+
 #include <ctype.h>
-#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,12 +144,37 @@ static int count_tokens(const char *text)
     }
 }
 
-static void count_lines(FILE *file, Counts *counts)
+// mirrors fgets: copies through the next '\n' (inclusive) or to the end of the buffer, NUL-terminated,
+// and truncates at capacity - 1 bytes without consuming past that point, so an overlong line comes back
+// as its own line on the next call, exactly like fgets on a too-small buffer
+static int next_line(const char **cursor, char *out, size_t capacity)
 {
+    const char *start = *cursor;
+    const char *newline;
+    size_t length;
+
+    if (*start == '\0') {
+        return 0;
+    }
+    newline = strchr(start, '\n');
+    length = newline != NULL ? (size_t)(newline - start) + 1 : strlen(start);
+    if (length > capacity - 1) {
+        length = capacity - 1;
+    }
+    memcpy(out, start, length);
+    out[length] = '\0';
+    *cursor = start + length;
+
+    return 1;
+}
+
+static void count_lines(const char *data, Counts *counts)
+{
+    const char *cursor = data;
     char line[LINE_CAPACITY];
 
     memset(counts, 0, sizeof *counts);
-    while (fgets(line, sizeof line, file) != NULL) {
+    while (next_line(&cursor, line, sizeof line)) {
         const char *key = line;
         const char *rest = split_key(line);
 
@@ -172,7 +198,6 @@ static void count_lines(FILE *file, Counts *counts)
             counts->groups++;
         }
     }
-    rewind(file);
 }
 
 static void *alloc(int count, size_t size)
@@ -560,39 +585,45 @@ static int load_mtl(Parser *p, const char *name)
     char path[OBJ_PATH_MAX];
     char line[LINE_CAPACITY];
     ObjMaterial *current = NULL;
-    FILE *file;
+    unsigned char *data;
+    const char *cursor;
+    const char *reason;
+    size_t size;
     int count = 0;
     int line_number = 0;
     int status = 0;
+    int length;
 
-    if (snprintf(path, sizeof path, "%s/%s", model->directory, name) >= (int)sizeof path) {
+    length = strcmp(model->directory, ".") == 0 ? snprintf(path, sizeof path, "%s", name)
+                                                 : snprintf(path, sizeof path, "%s/%s", model->directory, name);
+    if (length < 0 || length >= (int)sizeof path) {
         return fail(p->path, p->line, "mtllib path is too long");
     }
-    file = fopen(path, "rb");
-    if (file == NULL) {
+    if (assets_read(path, &data, &size, &reason) != 0) {
         fprintf(stderr, "%s:%d: cannot open %s: %s, continuing without its materials\n", p->path, p->line, path,
-                strerror(errno));
+                reason);
         return 0;
     }
 
-    while (fgets(line, sizeof line, file) != NULL) {
+    cursor = (const char *)data;
+    while (next_line(&cursor, line, sizeof line)) {
         if (strncmp(line, "newmtl", 6) == 0) {
             count++;
         }
     }
-    rewind(file);
     if (count > 0) {
         ObjMaterial *grown = realloc(model->materials, sizeof *grown * (size_t)(model->material_count + count));
 
         if (grown == NULL) {
-            fclose(file);
+            free(data);
             fprintf(stderr, "out of memory loading %s\n", path);
             return -1;
         }
         model->materials = grown;
     }
 
-    while (status == 0 && fgets(line, sizeof line, file) != NULL) {
+    cursor = (const char *)data;
+    while (status == 0 && next_line(&cursor, line, sizeof line)) {
         line_number++;
         if (line_overflowed(line, sizeof line)) {
             status = fail(path, line_number, "line too long");
@@ -600,10 +631,7 @@ static int load_mtl(Parser *p, const char *name)
             status = parse_mtl_line(model, &current, line, path, line_number);
         }
     }
-    if (status == 0 && ferror(file)) {
-        status = fail(path, line_number, "read error");
-    }
-    fclose(file);
+    free(data);
 
     return status;
 }
@@ -700,47 +728,47 @@ static int split_directory(const char *path, char *directory, size_t size)
     return length >= 0 && (size_t)length < size ? 0 : -1;
 }
 
-int obj_load(Model *model, const char *path)
+int obj_load(Model *model, const char *relative)
 {
     Parser parser;
     Counts counts;
     char line[LINE_CAPACITY];
-    FILE *file;
+    unsigned char *data;
+    const char *cursor;
+    const char *reason;
+    size_t size;
     int status = 0;
 
     memset(model, 0, sizeof *model);
     memset(&parser, 0, sizeof parser);
     parser.model = model;
-    parser.path = path;
+    parser.path = relative;
     parser.material = -1;
 
-    if (split_directory(path, model->directory, sizeof model->directory) != 0) {
-        fprintf(stderr, "model path is too long: %s\n", path);
+    if (split_directory(relative, model->directory, sizeof model->directory) != 0) {
+        fprintf(stderr, "model path is too long: %s\n", relative);
         return -1;
     }
-    file = fopen(path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "cannot open %s: %s\n", path, strerror(errno));
+    if (assets_read(relative, &data, &size, &reason) != 0) {
+        fprintf(stderr, "cannot open %s: %s\n", relative, reason);
         return -1;
     }
 
-    count_lines(file, &counts);
+    count_lines((const char *)data, &counts);
     if (allocate(&parser, &counts) != 0) {
-        fprintf(stderr, "out of memory loading %s\n", path);
+        fprintf(stderr, "out of memory loading %s\n", relative);
         status = -1;
     }
-    while (status == 0 && fgets(line, sizeof line, file) != NULL) {
+    cursor = (const char *)data;
+    while (status == 0 && next_line(&cursor, line, sizeof line)) {
         parser.line++;
         if (line_overflowed(line, sizeof line)) {
-            status = fail(path, parser.line, "line too long");
+            status = fail(relative, parser.line, "line too long");
         } else {
             status = parse_line(&parser, line);
         }
     }
-    if (status == 0 && ferror(file)) {
-        status = fail(path, parser.line, "read error");
-    }
-    fclose(file);
+    free(data);
 
     if (status == 0) {
         finish(&parser);

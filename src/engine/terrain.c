@@ -1,6 +1,5 @@
 #include "engine/terrain.h"
 
-#include "engine/assets.h"
 #include "engine/gl_ext.h"
 #include "engine/material.h"
 #include "engine/noise.h"
@@ -488,17 +487,12 @@ int terrain_init(Terrain *terrain)
     glUseProgram(terrain->shader.program);
     for (set = 0; set < TERRAIN_TEXTURE_SETS; set++) {
         for (map = 0; map < 3; map++) {
-            char path[ASSETS_PATH_MAX];
             char name[SHADER_UNIFORM_NAME_LENGTH];
             const int unit = set * 3 + map;
 
             snprintf(name, sizeof name, "%s[%d]", map_uniforms[map], set);
             shader_set_int(&terrain->shader, name, unit);
-            if (assets_path(path, sizeof path, texture_sets[set][map]) != 0) {
-                fprintf(stderr, "asset path is too long: %s\n", texture_sets[set][map]);
-                return -1;
-            }
-            terrain->maps[unit] = material_texture(path, map == 0 ? TEXTURE_COLOR : TEXTURE_DATA);
+            terrain->maps[unit] = material_texture(texture_sets[set][map], map == 0 ? TEXTURE_COLOR : TEXTURE_DATA);
             if (terrain->maps[unit] == 0) {
                 return -1;
             }

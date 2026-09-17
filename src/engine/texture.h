@@ -15,9 +15,9 @@ typedef enum {
     TEXTURE_SPRITE
 } TextureKind;
 
-GLuint texture_load(const char *path, TextureKind kind);
+GLuint texture_load(const char *relative, TextureKind kind);
 // a cutout image is bled in place, so the caller's pixels change
 GLuint texture_create(Image *image, TextureKind kind, const char *name);
-GLuint texture_load_hdr(const char *path);
+GLuint texture_load_hdr(const char *relative);
 
 #endif

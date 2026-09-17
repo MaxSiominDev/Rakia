@@ -1,11 +1,12 @@
 #include "check.h"
+#include "engine/assets.h"
 #include "engine/image.h"
 
 #include <stddef.h>
 #include <stdlib.h>
 
-#define PANORAMA "assets/raw/sky/belfast_sunset_puresky/belfast_sunset_puresky_2k.hdr"
-#define NORMAL_MAP "assets/raw/aircraft/f16_rickslash/f16_rickslash_normal_2.jpg"
+#define PANORAMA "raw/sky/belfast_sunset_puresky/belfast_sunset_puresky_2k.hdr"
+#define NORMAL_MAP "raw/aircraft/f16_rickslash/f16_rickslash_normal_2.jpg"
 
 static float row_luminance(const HdrImage *image, int row)
 {
@@ -89,6 +90,7 @@ void test_image_main(void)
     Image normal_map;
     const char *reason = NULL;
 
+    assets_init("assets");
     test_bleed();
 
     check(image_load_hdr(&panorama, PANORAMA, &reason) == 0, "the sunset panorama loads");
@@ -107,6 +109,6 @@ void test_image_main(void)
         image_free(&normal_map);
     }
 
-    check(image_load(&normal_map, "assets/raw/nothing.png", &reason) == -1 && reason != NULL,
+    check(image_load(&normal_map, "raw/nothing.png", &reason) == -1 && reason != NULL,
           "a missing image fails with a reason");
 }
